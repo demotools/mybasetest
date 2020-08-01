@@ -779,7 +779,7 @@ typedef struct {
 
 #ifdef CONFIG_PGTABLE_REPLICATION
 // #include <linux/topology.h>
-extern static inline int numa_node_id(void);
+extern int numa_node_id(void);
 
 static inline pgd_t *mm_get_pgd_for_node(struct mm_struct *mm)
 {
