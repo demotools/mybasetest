@@ -90,6 +90,7 @@ static inline int numa_node_id(void)
 {
 	return raw_cpu_read(numa_node);
 }
+#define numa_node_id numa_node_id
 #endif
 
 #ifndef cpu_to_node
