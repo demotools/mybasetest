@@ -216,6 +216,10 @@ struct page {
 					   not kmapped, ie. highmem) */
 #endif /* WANT_PAGE_VIRTUAL */
 
+#ifdef CONFIG_PGTABLE_REPLICATION
+	struct page *replica;
+#endif
+
 #ifdef LAST_CPUPID_NOT_IN_PAGE_FLAGS
 	int _last_cpupid;
 #endif
@@ -396,6 +400,13 @@ struct mm_struct {
 #endif
 		unsigned long task_size;	/* size of task vm space */
 		unsigned long highest_vm_end;	/* highest vma end address */
+
+		#ifdef CONFIG_PGTABLE_REPLICATION
+		pgd_t *    repl_pgd[8];
+		bool       repl_pgd_enabled;
+		nodemask_t repl_pgd_nodes;
+		#endif
+
 		pgd_t * pgd;
 
 #ifdef CONFIG_MEMBARRIER
@@ -544,6 +555,19 @@ struct mm_struct {
 };
 
 extern struct mm_struct init_mm;
+
+#ifdef CONFIG_PGTABLE_REPLICATION
+#include <linux/topology.h>
+
+static inline pgd_t *mm_get_pgd_for_node(struct mm_struct *mm)
+{
+	pgd_t *pgd;
+	pgd = mm->repl_pgd[numa_node_id()];
+	return (pgd != NULL ? pgd : mm->pgd);
+}
+#else
+#define mm_get_pgd_for_node(_mm) ((_mm)->pgd)
+#endif
 
 /* Pointer magic because the dynamic array size confuses some compilers. */
 static inline void mm_init_cpumask(struct mm_struct *mm)
