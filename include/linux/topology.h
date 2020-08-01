@@ -34,6 +34,9 @@
 #include <linux/smp.h>
 #include <linux/percpu.h>
 #include <asm/topology.h>
+#ifdef CONFIG_PGTABLE_REPLICATION
+#include <asm/numa.h>
+#endif
 
 #ifndef nr_cpus_node
 #define nr_cpus_node(node) cpumask_weight(cpumask_of_node(node))
@@ -204,14 +207,10 @@ static inline const struct cpumask *cpu_smt_mask(int cpu)
 	return topology_sibling_cpumask(cpu);
 }
 #endif
-#ifdef CONFIG_PGTABLE_REPLICATION
-// #include <asm/numa.h>
-extern node_to_cpumask_map;
-#endif
+
 static inline const struct cpumask *cpu_cpu_mask(int cpu)
 {
-	// return cpumask_of_node(cpu_to_node(cpu));
-	return node_to_cpumask_map(cpu_to_node(cpu));
+	return cpumask_of_node(cpu_to_node(cpu));
 }
 
 
