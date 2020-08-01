@@ -14,7 +14,9 @@
 #include <linux/uprobes.h>
 #include <linux/page-flags-layout.h>
 #include <linux/workqueue.h>
-
+#ifdef CONFIG_PGTABLE_REPLICATION
+#include <linux/nodemask.h> //pgtreplacation
+#endif
 #include <asm/mmu.h>
 
 #ifndef AT_VECTOR_SIZE_ARCH
