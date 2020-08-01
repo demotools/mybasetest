@@ -558,19 +558,6 @@ struct mm_struct {
 
 extern struct mm_struct init_mm;
 
-#ifdef CONFIG_PGTABLE_REPLICATION
-#include <linux/topology.h>
-
-static inline pgd_t *mm_get_pgd_for_node(struct mm_struct *mm)
-{
-	pgd_t *pgd;
-	pgd = mm->repl_pgd[numa_node_id()];
-	return (pgd != NULL ? pgd : mm->pgd);
-}
-#else
-#define mm_get_pgd_for_node(_mm) ((_mm)->pgd)
-#endif
-
 /* Pointer magic because the dynamic array size confuses some compilers. */
 static inline void mm_init_cpumask(struct mm_struct *mm)
 {
@@ -789,5 +776,18 @@ enum tlb_flush_reason {
 typedef struct {
 	unsigned long val;
 } swp_entry_t;
+
+#ifdef CONFIG_PGTABLE_REPLICATION
+#include <linux/topology.h>
+
+static inline pgd_t *mm_get_pgd_for_node(struct mm_struct *mm)
+{
+	pgd_t *pgd;
+	pgd = mm->repl_pgd[numa_node_id()];
+	return (pgd != NULL ? pgd : mm->pgd);
+}
+#else
+#define mm_get_pgd_for_node(_mm) ((_mm)->pgd)
+#endif
 
 #endif /* _LINUX_MM_TYPES_H */

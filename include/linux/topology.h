@@ -85,7 +85,6 @@ extern int __read_mostly node_reclaim_distance;
 DECLARE_PER_CPU(int, numa_node);
 
 #ifndef numa_node_id
-static inline int numa_node_id(void);
 /* Returns the number of the current Node. */
 static inline int numa_node_id(void)
 {
