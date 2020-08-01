@@ -204,7 +204,9 @@ static inline const struct cpumask *cpu_smt_mask(int cpu)
 	return topology_sibling_cpumask(cpu);
 }
 #endif
-
+#ifdef CONFIG_PGTABLE_REPLICATION
+#include <asm/numa.h>
+#endif
 static inline const struct cpumask *cpu_cpu_mask(int cpu)
 {
 	return cpumask_of_node(cpu_to_node(cpu));
