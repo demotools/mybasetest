@@ -42,21 +42,21 @@
 
 // struct page *page_of_ptable_entry(void *pgtableep);
 
-// void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval);
-// void pgtable_repl_set_pte_at(struct mm_struct *mm, unsigned long addr,
-// 							 pte_t *ptep, pte_t pteval);
-// inline void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval);
-// inline void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval);
-// inline void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval);
+void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval);
+void pgtable_repl_set_pte_at(struct mm_struct *mm, unsigned long addr,
+							 pte_t *ptep, pte_t pteval);
+inline void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval);
+inline void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval);
+inline void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval);
 
 int pgtable_repl_pgd_alloc(struct mm_struct *mm);
 void pgtable_repl_pgd_free(struct mm_struct *mm, pgd_t *pgd);
-// void pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long pfn);
-// void pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long pfn);
-// void pgtable_repl_alloc_pud(struct mm_struct *mm, unsigned long pfn);
-// void pgtable_repl_release_pte(unsigned long pfn);
-// void pgtable_repl_release_pmd(unsigned long pfn);
-// void pgtable_repl_release_pud(unsigned long pfn);
+void pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long pfn);
+void pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long pfn);
+void pgtable_repl_alloc_pud(struct mm_struct *mm, unsigned long pfn);
+void pgtable_repl_release_pte(unsigned long pfn);
+void pgtable_repl_release_pmd(unsigned long pfn);
+void pgtable_repl_release_pud(unsigned long pfn);
 
 // int pgtable_cache_populate(size_t numpgtables);
 // int pgtable_cache_drain(void);

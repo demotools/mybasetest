@@ -441,4 +441,198 @@ void pgtable_repl_release_pud(unsigned long pfn)
 {
 	__pgtable_repl_release_one(pfn);
 }
+
+/*
+ * ===============================================================================
+ * Set Page Table Entries
+ * ===============================================================================
+ */
+
+
+void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
+{
+	int i;
+	long offset;
+	struct page *page_pte;
+
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
+
+	page_pte = page_of_ptable_entry(ptep);
+	check_page(page_pte);
+
+	if (page_pte->replica == NULL) {
+		return;
+	}
+
+	offset = (long)ptep - (long)page_to_virt(page_pte);
+	check_offset(offset);
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page_pte = page_pte->replica;
+		check_page_node(page_pte, i);
+
+		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+		native_set_pte(ptep, pteval);
+	}
+}
+
+
+void pgtable_repl_set_pte_at(struct mm_struct *mm, unsigned long addr,
+							 pte_t *ptep, pte_t pteval)
+{
+	pgtable_repl_set_pte(ptep, pteval);
+}
+
+static inline pmd_t native_make_pmd(pmdval_t val)
+{
+	return (pmd_t) { val };
+}
+
+void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
+{
+	int i;
+	long offset;
+	struct page *page_pmd, *page_pte;
+
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
+
+	page_pmd = page_of_ptable_entry(pmdp);
+	check_page(page_pmd);
+
+	if (page_pmd->replica == NULL) {
+		return;
+	}
+
+	page_pte = pmd_page(pmdval);
+
+	offset = ((long)pmdp & ~PAGE_MASK);
+	check_offset(offset);
+
+	/* the entry is a large entry i.e. pointing to a frame, or the entry is not valid */
+	if (!page_pte || pmd_none(pmdval) || !pmd_present(pmdval)) {
+		for (i = 0; i < nr_node_ids; i++) {
+			page_pmd = page_pmd->replica;
+			check_page_node(page_pmd, i);
+			pmdp = (pmd_t *)((long)page_to_virt(page_pmd) + offset);
+			native_set_pmd(pmdp, pmdval);
+		}
+		return;
+	}
+
+	/* where the entry points to */
+	for (i = 0; i < nr_node_ids; i++) {
+		page_pmd = page_pmd->replica;
+		page_pte = page_pte->replica;
+
+		check_page_node(page_pmd, i);
+		check_page_node(page_pte, i);
+
+		pmdp = (pmd_t *)((long)page_to_virt(page_pmd) + offset);
+
+		// pmdval = native_make_pmd((page_to_pfn(page_pte) << PAGE_SHIFT) | pmd_flags(pmdval));
+
+		native_set_pmd(pmdp, pmdval);
+	}
+}
+
+static inline pud_t native_make_pud(pmdval_t val)
+{
+	return (pud_t) { val };
+}
+void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
+{
+	int i;
+	long offset;
+	struct page *page_pud, *page_pmd;
+
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
+
+	page_pud = page_of_ptable_entry(pudp);
+	check_page(page_pud);
+
+	if (page_pud->replica == NULL) {
+		return;
+	}
+
+	offset = ((long)pudp & ~PAGE_MASK);
+	check_offset(offset);
+
+	page_pmd = pud_page(pudval);
+
+	/* there is no age for this entry or the entry is huge or the entry is not present */
+	if (!page_pmd || !pud_present(pudval) || pud_none(pudval)) {
+		for (i = 0; i < nr_node_ids; i++) {
+			page_pud = page_pud->replica;
+			check_page_node(page_pud, i);
+			pudp = (pud_t *)((long)page_to_virt(page_pud) + offset);
+			native_set_pud(pudp, pudval);
+		}
+		return;
+	}
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page_pud = page_pud->replica;
+		page_pmd = page_pmd->replica;
+
+		check_page_node(page_pud, i);
+		check_page_node(page_pmd, i);
+
+		pudp = (pud_t *)((long)page_to_virt(page_pud) + offset);
+		// pudval = native_make_pud((page_to_pfn(page_pmd) << PAGE_SHIFT) | pud_flags(pudval));
+		native_set_pud(pudp, pudval);
+	}
+}
+
+void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
+{
+	// panic("PTREPL: %s:%d:  not yet implemented by Mitosis\n", __FUNCTION__, __LINE__);
+	int i;
+	long offset;
+	struct page *page_pgd, *page_pud;
+
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
+
+	page_pgd = page_of_ptable_entry(pgdp);
+	check_page(page_pgd);
+
+	if (page_pgd->replica == NULL) {
+		return;
+	}
+
+	offset = ((long)pgdp & ~PAGE_MASK);
+	check_offset(offset);
+
+	page_pud = pgd_page(pgdval);
+
+	if (!page_pud || pgd_none(pgdval) || !pgd_present(pgdval)) {
+		for (i = 0; i < nr_node_ids; i++) {
+			page_pgd = page_pgd->replica;
+			check_page_node(page_pgd, i);
+			pgdp = (pgd_t *)((long)page_to_virt(page_pgd) + offset);
+			native_set_pgd(pgdp, pgdval);
+		}
+		return;
+	}
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page_pud = page_pud->replica;
+		page_pgd = page_pgd->replica;
+
+		check_page_node(page_pgd, i);
+		check_page_node(page_pud, i);
+
+		pgdp = (pgd_t *)((long)page_to_virt(page_pgd) + offset);
+
+		// pgdval = native_make_pgd((page_to_pfn(page_pud) << PAGE_SHIFT) | pgd_flags(pgdval));
+		native_set_pgd(pgdp, pgdval);
+	}
+}
 #endif
