@@ -642,7 +642,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
  * ==================================================================
  */
 
-
+#define PGALLOC_GFP (GFP_KERNEL | __GFP_ZERO)
 // extern struct page *
 // __alloc_pages_nodemask_pgtrepl(unsigned int order, int preferred_nid,
 // 							nodemask_t *nodemask);
