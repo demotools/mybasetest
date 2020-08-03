@@ -643,11 +643,6 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
  */
 
 #define PGALLOC_GFP (GFP_KERNEL | __GFP_ZERO)
-// extern struct page *
-// __alloc_pages_nodemask_pgtrepl(unsigned int order, int preferred_nid,
-// 							nodemask_t *nodemask);
-// extern void __free_pages(struct page *page, unsigned int order);
-// // #define PGALLOC_GFP (GFP_KERNEL_ACCOUNT | __GFP_ZERO)
 
 int pgtable_cache_populate(size_t numpgtables)
 {
@@ -676,7 +671,6 @@ int pgtable_cache_populate(size_t numpgtables)
 		for (j = 0; j < numpgtables; j++) {
 			/* allocte a new page, and place it in the replica list */
 			p = __alloc_pages_nodemask(PGALLOC_GFP, 0, i, &nm);
-			// p = __alloc_pages_nodemask_pgtrepl(0, i, &nm);
 			if (p) {
 				check_page_node(p, i);
 				p->replica = pgtable_cache[i];
@@ -738,7 +732,6 @@ struct page *pgtable_cache_alloc(int node)
 
 		/* allocte a new page, and place it in the replica list */
 		p = __alloc_pages_nodemask(PGALLOC_GFP, 0, node, &nm);
-		// p = __alloc_pages_nodemask_pgtrepl(0, node, &nm);
 		check_page_node(p, node);
 		return p;
 	}
@@ -769,5 +762,122 @@ void pgtable_cache_free(int node, struct page *p)
 	pgtable_cache[node] = p;
 	pgtable_cache_size[node]++;
 	spin_unlock(&pgtable_cache_lock);
+}
+
+/*
+ * ==================================================================
+ * Prepare Replication
+ * ==================================================================
+ */
+// #include <linux/sched/task.h>
+#define __PHYSICAL_MASK_SHIFT	52
+#define __PHYSICAL_MASK		((phys_addr_t)((1ULL << __PHYSICAL_MASK_SHIFT) - 1))
+#define PHYSICAL_PAGE_MASK	(((signed long)PAGE_MASK) & __PHYSICAL_MASK)
+#define PTE_PFN_MASK		((pteval_t)PHYSICAL_PAGE_MASK)
+static inline unsigned long pgd_page_vaddr(pgd_t pgd)
+{
+	return (unsigned long)__va((unsigned long)pgd_val(pgd) & PTE_PFN_MASK);
+}
+// static inline unsigned long pud_page_vaddr(pud_t pud)
+// {
+// 	return (unsigned long)__va(pud_val(pud) & pud_pfn_mask(pud));
+// }
+int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
+{
+	int err = 0;
+	pgd_t *pgd;
+	pud_t *pud;
+	pmd_t *pmd;
+	pte_t *pte;
+	size_t pgd_idx, pud_idx, pmd_idx, pte_idx;
+
+
+	/* check if the subsystem is initialized. this should actually be the case */
+	if (unlikely(!pgtable_repl_initialized)) {
+		panic("PTREPL: %s:%u - subsystem should be enabled by now! \n", __FUNCTION__, __LINE__);
+	}
+
+	/* if it already has been enbaled, don't do anything */
+	if (unlikely(mm->repl_pgd_enabled)) {
+		return 0;
+	}
+
+	pgd = (pgd_t *)mm->pgd;
+	task_lock(current);
+	spin_lock(&mm->page_table_lock);
+
+	/* we need to talk the page table */
+	mm->repl_pgd_nodes = nodes;
+	mm->repl_pgd_enabled = true;
+
+
+	/* this will replicate the pgd */
+	pgtable_repl_pgd_alloc(mm);
+	//	if (!mm->repl_pgd_enabled) {panic("FOOOF");}
+	//	printk("%s:%u p4d=%lx..%lx\n", __FUNCTION__, __LINE__, (long)p4d, (long)p4d + 4095);
+	for (pgd_idx = 0; pgd_idx < pgd_index(PAGE_OFFSET); pgd_idx++) {
+		if (pgd_none(pgd[pgd_idx])) {
+			continue;
+		}
+
+		pud = (pud_t *)pgd_page_vaddr(pgd[pgd_idx]);
+
+		pgtable_repl_alloc_pud(mm, page_to_pfn(page_of_ptable_entry(pud)));
+		//	printk("%s:%u set_p4d(p4d[%zu], 0x%lx, 0x%lx\n",__FUNCTION__, __LINE__,  p4d_idx, _PAGE_TABLE | __pa(pud_new), p4d_val(__p4d(_PAGE_TABLE | __pa(pud_new))));
+		set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
+
+		for (pud_idx = 0; pud_idx < 512; pud_idx++) {
+			if (pud_none(pud[pud_idx])) {
+				continue;
+			}
+
+			// if (pud_huge(pud[pud_idx])) {
+			// 	set_pud(pud + pud_idx, pud[pud_idx]);
+			// 	continue;
+			// }
+
+			// pmd =  (pmd_t *)pud_page_vaddr(pud[pud_idx]);
+
+			pgtable_repl_alloc_pmd(mm, page_to_pfn(page_of_ptable_entry(pmd)));
+			set_pud(pud + pud_idx,pud[pud_idx]);
+
+			for (pmd_idx = 0; pmd_idx < 512; pmd_idx++) {
+
+				if (pmd_none(pmd[pmd_idx])) {
+					continue;
+				}
+
+				// if (pmd_huge(pmd[pmd_idx])) {
+				// 	set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
+				// 	continue;
+				// }
+
+				/* get the pte page */
+				// pte = (pte_t *)pmd_page_vaddr(pmd[pmd_idx]);
+
+				pgtable_repl_alloc_pte(mm, page_to_pfn(page_of_ptable_entry(pte)));
+
+				set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
+
+				for (pte_idx = 0; pte_idx < 512; pte_idx++) {
+					if (pte_none(pte[pte_idx])) {
+						continue;
+					}
+					set_pte(pte + pte_idx, pte[pte_idx]);
+				}
+			}
+		}
+	}
+
+	spin_unlock(&mm->page_table_lock);
+	task_unlock(current);
+	if (err) {
+		mm->repl_pgd_enabled = false;
+		printk("PGREPL: DISABLE MITOSIS DUE TO ERROR\n");
+
+	}
+	// pgtable_repl_write_cr3(__native_read_cr3());
+
+	return err;
 }
 #endif

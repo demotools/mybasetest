@@ -58,10 +58,9 @@ void pgtable_repl_release_pte(unsigned long pfn);
 void pgtable_repl_release_pmd(unsigned long pfn);
 void pgtable_repl_release_pud(unsigned long pfn);
 
-// int pgtable_cache_populate(size_t numpgtables);
-// int pgtable_cache_drain(void);
-// int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes);
-
+int pgtable_cache_populate(size_t numpgtables);
+int pgtable_cache_drain(void);
+int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes);
 
 #endif
 
