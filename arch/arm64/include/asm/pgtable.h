@@ -35,10 +35,10 @@
 
 
 #ifdef CONFIG_PGTABLE_REPLICATION
-void native_set_pgd(pgd_t *pgdp, pgd_t pgd);
-void native_set_pte(pte_t *ptep, pte_t pte);
-void native_set_pmd(pmd_t *pmdp, pmd_t pmd);
-void native_set_pud(pud_t *pudp, pud_t pud);
+void native_norepl_set_pgd(pgd_t *pgdp, pgd_t pgd);
+void native_norepl_set_pte(pte_t *ptep, pte_t pte);
+void native_norepl_set_pmd(pmd_t *pmdp, pmd_t pmd);
+void native_norepl_set_pud(pud_t *pudp, pud_t pud);
 
 // struct page *page_of_ptable_entry(void *pgtableep);
 
@@ -256,7 +256,7 @@ static inline void set_pte(pte_t *ptep, pte_t pte)
 	pgtable_repl_set_pte(ptep, pte);
 }
 
-void native_set_pte(pte_t *ptep, pte_t pte)
+void native_norepl_set_pte(pte_t *ptep, pte_t pte)
 {
 	WRITE_ONCE(*ptep, pte);
 
@@ -549,7 +549,7 @@ static inline void set_pmd(pmd_t *pmdp, pmd_t pmd)
 	pgtable_repl_set_pmd(pmdp, pmd);
 }
 
-void native_set_pmd(pmd_t *pmdp, pmd_t pmd)
+void native_norepl_set_pmd(pmd_t *pmdp, pmd_t pmd)
 {
 #ifdef __PAGETABLE_PMD_FOLDED
 	if (in_swapper_pgdir(pmdp)) {
@@ -649,7 +649,7 @@ static inline void set_pud(pud_t *pudp, pud_t pud)
 	pgtable_repl_set_pud(pudp, pud);
 }
 
-void native_set_pud(pud_t *pudp, pud_t pud)
+void native_norepl_set_pud(pud_t *pudp, pud_t pud)
 {
 #ifdef __PAGETABLE_PUD_FOLDED
 	if (in_swapper_pgdir(pudp)) {
@@ -743,7 +743,7 @@ static inline void set_pgd(pgd_t *pgdp, pgd_t pgd)
 	//pgtrepl
 	pgtable_repl_set_pgd(pgdp, pgd);
 }
-void native_set_pgd(pgd_t *pgdp, pgd_t pgd)
+void native_norepl_set_pgd(pgd_t *pgdp, pgd_t pgd)
 {
 	if (in_swapper_pgdir(pgdp)) {
 		set_swapper_pgd(pgdp, pgd);

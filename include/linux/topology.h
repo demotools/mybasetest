@@ -86,8 +86,13 @@ DECLARE_PER_CPU(int, numa_node);
 
 #ifndef numa_node_id
 /* Returns the number of the current Node. */
-// static inline int numa_node_id(void)
-int numa_node_id(void)
+static inline int numa_node_id(void)
+// int numa_node_id(void)
+{
+	return raw_cpu_read(numa_node);
+}
+
+int ptrepl_numa_node_id(void)
 {
 	return raw_cpu_read(numa_node);
 }
