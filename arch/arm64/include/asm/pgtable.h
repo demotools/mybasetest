@@ -35,6 +35,9 @@
 
 
 #ifdef CONFIG_PGTABLE_REPLICATION
+
+pgd_t *mm_get_pgd_for_node(struct mm_struct *mm);
+
 static inline void native_set_pgd(pgd_t *pgdp, pgd_t pgd);
 static inline void native_set_pte(pte_t *ptep, pte_t pte);
 static inline void native_set_pmd(pmd_t *pmdp, pmd_t pmd);

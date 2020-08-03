@@ -777,18 +777,18 @@ typedef struct {
 	unsigned long val;
 } swp_entry_t;
 
-#ifdef CONFIG_PGTABLE_REPLICATION
-#include <linux/topology.h>
-//extern int ptrepl_numa_node_id(void);
+// #ifdef CONFIG_PGTABLE_REPLICATION
+// #include <linux/topology.h>
+// //extern int ptrepl_numa_node_id(void);
 
-static inline pgd_t *mm_get_pgd_for_node(struct mm_struct *mm)
-{
-	pgd_t *pgd;
-	pgd = mm->repl_pgd[ptrepl_numa_node_id()];
-	return (pgd != NULL ? pgd : mm->pgd);
-}
-#else
-#define mm_get_pgd_for_node(_mm) ((_mm)->pgd)
-#endif
+// static inline pgd_t *mm_get_pgd_for_node(struct mm_struct *mm)
+// {
+// 	pgd_t *pgd;
+// 	pgd = mm->repl_pgd[ptrepl_numa_node_id()];
+// 	return (pgd != NULL ? pgd : mm->pgd);
+// }
+// #else
+// #define mm_get_pgd_for_node(_mm) ((_mm)->pgd)
+// #endif
 
 #endif /* _LINUX_MM_TYPES_H */

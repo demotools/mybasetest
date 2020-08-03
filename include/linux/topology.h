@@ -92,11 +92,6 @@ static inline int numa_node_id(void)
 {
 	return raw_cpu_read(numa_node);
 }
-
-static inline int ptrepl_numa_node_id(void)
-{
-	return raw_cpu_read(numa_node);
-}
 #endif
 
 #ifndef cpu_to_node
