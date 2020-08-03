@@ -35,7 +35,7 @@
 #include <linux/percpu.h>
 #include <asm/topology.h>
 #ifdef CONFIG_PGTABLE_REPLICATION
-#include <asm/numa.h>
+//#include <asm/numa.h>
 #endif
 
 #ifndef nr_cpus_node
