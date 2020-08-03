@@ -180,6 +180,36 @@ void check_and_switch_context(struct mm_struct *mm, unsigned int cpu);
 #define init_new_context(tsk,mm)	({ atomic64_set(&(mm)->context.id, 0); 0; })
 
 #ifdef CONFIG_ARM64_SW_TTBR0_PAN
+#ifdef CONFIG_PGTABLE_REPLICATION
+extern bool pgtable_repl_initialized;
+static inline void update_saved_ttbr0(struct task_struct *tsk,
+				      struct mm_struct *mm)
+{
+	u64 ttbr;
+
+	if (!system_uses_ttbr0_pan())
+		return;
+
+	if (mm == &init_mm)
+	{
+		ttbr = __pa_symbol(empty_zero_page);
+	}	
+	else
+	{
+		if (pgtable_repl_initialized && mm->repl_pgd_enabled)
+		{
+			pgd_t *pgd;
+			pgd = mm_get_pgd_for_node(mm);
+			ttbr = virt_to_phys(pgd) | ASID(mm) << 48;
+		}
+		else
+		{
+			ttbr = virt_to_phys(mm->pgd) | ASID(mm) << 48;
+		}
+	}
+	WRITE_ONCE(task_thread_info(tsk)->ttbr0, ttbr);
+}
+#else
 static inline void update_saved_ttbr0(struct task_struct *tsk,
 				      struct mm_struct *mm)
 {
@@ -195,6 +225,8 @@ static inline void update_saved_ttbr0(struct task_struct *tsk,
 
 	WRITE_ONCE(task_thread_info(tsk)->ttbr0, ttbr);
 }
+#endif
+
 #else
 static inline void update_saved_ttbr0(struct task_struct *tsk,
 				      struct mm_struct *mm)

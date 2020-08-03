@@ -263,10 +263,21 @@ asmlinkage void post_ttbr_update_workaround(void)
 			ARM64_WORKAROUND_CAVIUM_27456));
 }
 
+#ifdef CONFIG_PGTABLE_REPLICATION
+extern bool pgtable_repl_initialized;
+#endif
 void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
 {
 	unsigned long ttbr1 = read_sysreg(ttbr1_el1);
 	unsigned long asid = ASID(mm);
+	#ifdef CONFIG_PGTABLE_REPLICATION
+	pgd_t *pgd;
+	if (pgtable_repl_initialized && mm->repl_pgd_enabled)
+	{
+		pgd = mm_get_pgd_for_node(mm);
+		pgd_phys = virt_to_phys(pgd);
+	}
+	#endif
 	unsigned long ttbr0 = phys_to_ttbr(pgd_phys);
 
 	/* Skip CNP for the reserved ASID */
