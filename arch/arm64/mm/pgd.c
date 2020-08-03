@@ -294,4 +294,151 @@ void pgtable_repl_pgd_free(struct mm_struct *mm, pgd_t *pgd)
 	pgd_page = page_of_ptable_entry(mm->pgd);
 	pgd_page->replica = NULL;
 }
+
+static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long pfn)
+{
+	int i;
+	struct page *p, *p2;
+
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
+
+	/* obtain the page for the pfn */
+	p = pfn_to_page(pfn);
+	if (p == NULL) {
+		return;
+	}
+
+	if (!mm->repl_pgd_enabled) {
+		p->replica = NULL;
+		return;
+	}
+
+	if (p->replica) {
+		printk("PTREP: Called alloc on an already allocated replica... verifying!\n");
+		p2 = p->replica;
+		for (i = 0; i < nr_node_ids; i++) {
+			check_page_node(p2, i);
+			p2 = p2->replica;
+		}
+		if (p2 != p) {
+			printk("%s:%d: PTREPL: NOT THE ASAME????\n", __FUNCTION__, __LINE__);
+		}
+		return;
+	}
+
+	p2 = p;
+	// int previusly_pgd_node = pfn_to_nid(pfn);
+	for (i = 0; i < nr_node_ids; i++) {
+		// //分配原始pgd的节点就不要复制新pgd了
+		// if(i == previusly_pgd_node)
+		// {
+		// 	continue;
+		// }
+		/* allocte a new page, and place it in the replica list */
+		p2->replica  = pgtable_cache_alloc(i);
+		if (p2->replica == NULL) {
+			goto cleanup;
+		}
+
+		check_page_node(p2->replica, i);
+
+		// if (ctor) {
+		// 	if(!ctor(p2->replica)) {
+		// 		panic("Failed to call ctor!\n");
+		// 	}
+		// }
+
+		/* set the replica pgd poiter */
+		p2 = p2->replica;
+	}
+
+	/* finish the loop: last -> first replica */
+	p2->replica = p;
+
+	/* let's verify */
+	#if 0
+	p2 = p->replica;
+	for (i = 0; i < nr_node_ids; i++) {
+		printk("page: %lx", (long)p2);
+		check_page_node(p2, i);
+		p2 = p2->replica;
+	}
+	if (p2 != p) {
+		panic("%s:%d: PTREPL: NOT THE ASAME????\n", __FUNCTION__, __LINE__);
+	}
+	#endif
+	return;
+
+	cleanup:
+
+	panic("%s:%d: PTREPL: FAILED!!!!\n", __FUNCTION__, __LINE__);
+}
+
+static inline void __pgtable_repl_release_one(unsigned long pfn)
+{
+	int i;
+	struct page *p, *p2, *pcurrent;
+	p = pfn_to_page(pfn);
+	if (unlikely(p == NULL)) {
+		return;
+	}
+
+	if (p->replica == NULL) {
+		return;
+	}
+
+	p2 = p->replica;
+	// int previusly_page_node = pfn_to_nid(pfn);
+	// int current_node;
+	for (i = 0; i < nr_node_ids; i++) {
+		// current_node = page_to_nid(p2);
+		// if(current_node == previusly_page_node)
+		// {
+		// 	p2 = p2->replica;
+		// 	continue;
+		// }
+		check_page_node(p2, i);
+		pcurrent = p2;
+		// if (dtor) {
+		// 	dtor(pcurrent);
+		// }
+		p2 = p2->replica;
+		pgtable_cache_free(i, pcurrent);
+	}
+
+	p->replica = NULL;
+}
+
+
+void pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long pfn)
+{
+	__pgtable_repl_alloc_one(mm, pfn);
+}
+
+void pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long pfn)
+{
+	__pgtable_repl_alloc_one(mm, pfn);
+}
+
+void pgtable_repl_alloc_pud(struct mm_struct *mm, unsigned long pfn)
+{
+	__pgtable_repl_alloc_one(mm, pfn);
+}
+
+void pgtable_repl_release_pte(unsigned long pfn)
+{
+	__pgtable_repl_release_one(pfn);
+}
+
+void pgtable_repl_release_pmd(unsigned long pfn)
+{
+	__pgtable_repl_release_one(pfn);
+}
+
+void pgtable_repl_release_pud(unsigned long pfn)
+{
+	__pgtable_repl_release_one(pfn);
+}
 #endif
