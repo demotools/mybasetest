@@ -270,6 +270,7 @@ void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
 {
 	unsigned long ttbr1 = read_sysreg(ttbr1_el1);
 	unsigned long asid = ASID(mm);
+	unsigned long ttbr0;
 	#ifdef CONFIG_PGTABLE_REPLICATION
 	pgd_t *pgd;
 	if (pgtable_repl_initialized && mm->repl_pgd_enabled)
@@ -278,7 +279,7 @@ void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
 		pgd_phys = virt_to_phys(pgd);
 	}
 	#endif
-	unsigned long ttbr0 = phys_to_ttbr(pgd_phys);
+	ttbr0 = phys_to_ttbr(pgd_phys);
 
 	/* Skip CNP for the reserved ASID */
 	if (system_supports_cnp() && asid)
