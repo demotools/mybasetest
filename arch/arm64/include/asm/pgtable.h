@@ -35,10 +35,10 @@
 
 
 #ifdef CONFIG_PGTABLE_REPLICATION
-// void native_set_pgd(pgd_t *pgdp, pgd_t pgd);
-// void native_set_pte(pte_t *ptep, pte_t pte);
-// void native_set_pmd(pmd_t *pmdp, pmd_t pmd);
-// void native_set_pud(pud_t *pudp, pud_t pud);
+void native_set_pgd(pgd_t *pgdp, pgd_t pgd);
+void native_set_pte(pte_t *ptep, pte_t pte);
+void native_set_pmd(pmd_t *pmdp, pmd_t pmd);
+void native_set_pud(pud_t *pudp, pud_t pud);
 
 // struct page *page_of_ptable_entry(void *pgtableep);
 
@@ -240,6 +240,37 @@ static inline pte_t pte_mkdevmap(pte_t pte)
 	return set_pte_bit(pte, __pgprot(PTE_DEVMAP | PTE_SPECIAL));
 }
 
+#ifdef CONFIG_PGTABLE_REPLICATION
+static inline void set_pte(pte_t *ptep, pte_t pte)
+{
+	WRITE_ONCE(*ptep, pte);
+
+	/*
+	 * Only if the new pte is valid and kernel, otherwise TLB maintenance
+	 * or update_mmu_cache() have the necessary barriers.
+	 */
+	if (pte_valid_not_user(pte)) {
+		dsb(ishst);
+		isb();
+	}
+	//pgtrepl
+	pgtable_repl_set_pte(ptep, pte);
+}
+
+void native_set_pte(pte_t *ptep, pte_t pte)
+{
+	WRITE_ONCE(*ptep, pte);
+
+	/*
+	 * Only if the new pte is valid and kernel, otherwise TLB maintenance
+	 * or update_mmu_cache() have the necessary barriers.
+	 */
+	if (pte_valid_not_user(pte)) {
+		dsb(ishst);
+		isb();
+	}
+}
+#else
 static inline void set_pte(pte_t *ptep, pte_t pte)
 {
 	WRITE_ONCE(*ptep, pte);
@@ -253,7 +284,7 @@ static inline void set_pte(pte_t *ptep, pte_t pte)
 		isb();
 	}
 }
-
+#endif
 extern void __sync_icache_dcache(pte_t pteval);
 
 /*
@@ -499,6 +530,43 @@ static inline bool in_swapper_pgdir(void *addr)
 	        ((unsigned long)swapper_pg_dir & PAGE_MASK);
 }
 
+#ifdef CONFIG_PGTABLE_REPLICATION
+static inline void set_pmd(pmd_t *pmdp, pmd_t pmd)
+{
+#ifdef __PAGETABLE_PMD_FOLDED
+	if (in_swapper_pgdir(pmdp)) {
+		set_swapper_pgd((pgd_t *)pmdp, __pgd(pmd_val(pmd)));
+		return;
+	}
+#endif /* __PAGETABLE_PMD_FOLDED */
+
+	WRITE_ONCE(*pmdp, pmd);
+
+	if (pmd_valid(pmd)) {
+		dsb(ishst);
+		isb();
+	}
+	//pgtrepl
+	pgtable_repl_set_pmd(pmdp, pmd);
+}
+
+void native_set_pmd(pmd_t *pmdp, pmd_t pmd)
+{
+#ifdef __PAGETABLE_PMD_FOLDED
+	if (in_swapper_pgdir(pmdp)) {
+		set_swapper_pgd((pgd_t *)pmdp, __pgd(pmd_val(pmd)));
+		return;
+	}
+#endif /* __PAGETABLE_PMD_FOLDED */
+
+	WRITE_ONCE(*pmdp, pmd);
+
+	if (pmd_valid(pmd)) {
+		dsb(ishst);
+		isb();
+	}
+}
+#else
 static inline void set_pmd(pmd_t *pmdp, pmd_t pmd)
 {
 #ifdef __PAGETABLE_PMD_FOLDED
@@ -515,6 +583,7 @@ static inline void set_pmd(pmd_t *pmdp, pmd_t pmd)
 		isb();
 	}
 }
+#endif
 
 static inline void pmd_clear(pmd_t *pmdp)
 {
@@ -561,6 +630,43 @@ static inline void pte_unmap(pte_t *pte) { }
 #define pud_leaf(pud)		pud_sect(pud)
 #define pud_valid(pud)		pte_valid(pud_pte(pud))
 
+#ifdef CONFIG_PGTABLE_REPLICATION
+static inline void set_pud(pud_t *pudp, pud_t pud)
+{
+#ifdef __PAGETABLE_PUD_FOLDED
+	if (in_swapper_pgdir(pudp)) {
+		set_swapper_pgd((pgd_t *)pudp, __pgd(pud_val(pud)));
+		return;
+	}
+#endif /* __PAGETABLE_PUD_FOLDED */
+
+	WRITE_ONCE(*pudp, pud);
+
+	if (pud_valid(pud)) {
+		dsb(ishst);
+		isb();
+	}
+    //pgtrepl
+	pgtable_repl_set_pud(pudp, pud);
+}
+
+void native_set_pud(pud_t *pudp, pud_t pud)
+{
+#ifdef __PAGETABLE_PUD_FOLDED
+	if (in_swapper_pgdir(pudp)) {
+		set_swapper_pgd((pgd_t *)pudp, __pgd(pud_val(pud)));
+		return;
+	}
+#endif /* __PAGETABLE_PUD_FOLDED */
+
+	WRITE_ONCE(*pudp, pud);
+
+	if (pud_valid(pud)) {
+		dsb(ishst);
+		isb();
+	}
+}
+#else
 static inline void set_pud(pud_t *pudp, pud_t pud)
 {
 #ifdef __PAGETABLE_PUD_FOLDED
@@ -577,7 +683,7 @@ static inline void set_pud(pud_t *pudp, pud_t pud)
 		isb();
 	}
 }
-
+#endif
 static inline void pud_clear(pud_t *pudp)
 {
 	set_pud(pudp, __pud(0));
@@ -624,6 +730,32 @@ static inline phys_addr_t pud_page_paddr(pud_t pud)
 #define pgd_bad(pgd)		(!(pgd_val(pgd) & 2))
 #define pgd_present(pgd)	(pgd_val(pgd))
 
+#ifdef CONFIG_PGTABLE_REPLICATION
+static inline void set_pgd(pgd_t *pgdp, pgd_t pgd)
+{
+	if (in_swapper_pgdir(pgdp)) {
+		set_swapper_pgd(pgdp, pgd);
+		return;
+	}
+
+	WRITE_ONCE(*pgdp, pgd);
+	dsb(ishst);
+	isb();
+	//pgtrepl
+	pgtable_repl_set_pgd(pgdp, pgd);
+}
+void native_set_pgd(pgd_t *pgdp, pgd_t pgd)
+{
+	if (in_swapper_pgdir(pgdp)) {
+		set_swapper_pgd(pgdp, pgd);
+		return;
+	}
+
+	WRITE_ONCE(*pgdp, pgd);
+	dsb(ishst);
+	isb();
+}
+#else
 static inline void set_pgd(pgd_t *pgdp, pgd_t pgd)
 {
 	if (in_swapper_pgdir(pgdp)) {
@@ -635,6 +767,7 @@ static inline void set_pgd(pgd_t *pgdp, pgd_t pgd)
 	dsb(ishst);
 	isb();
 }
+#endif
 
 static inline void pgd_clear(pgd_t *pgdp)
 {
