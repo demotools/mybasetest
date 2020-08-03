@@ -778,8 +778,8 @@ typedef struct {
 } swp_entry_t;
 
 #ifdef CONFIG_PGTABLE_REPLICATION
-// #include <linux/topology.h>
-extern int ptrepl_numa_node_id(void);
+#include <linux/topology.h>
+//extern int ptrepl_numa_node_id(void);
 
 static inline pgd_t *mm_get_pgd_for_node(struct mm_struct *mm)
 {
