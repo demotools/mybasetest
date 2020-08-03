@@ -635,4 +635,139 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 		native_set_pgd(pgdp, pgdval);
 	}
 }
+
+/*
+ * ==================================================================
+ * Page Table Cache
+ * ==================================================================
+ */
+
+
+// extern struct page *
+// __alloc_pages_nodemask_pgtrepl(unsigned int order, int preferred_nid,
+// 							nodemask_t *nodemask);
+// extern void __free_pages(struct page *page, unsigned int order);
+// // #define PGALLOC_GFP (GFP_KERNEL_ACCOUNT | __GFP_ZERO)
+
+int pgtable_cache_populate(size_t numpgtables)
+{
+	size_t i, j;
+	size_t num_nodes = MAX_SUPPORTED_NODE;
+	struct page *p;
+	nodemask_t nm = NODE_MASK_NONE;
+
+	printk("PGREPL: populating pgtable cache with %zu tables per node\n",
+			numpgtables);
+
+	spin_lock(&pgtable_cache_lock);
+
+	if (nr_node_ids < num_nodes) {
+		num_nodes = nr_node_ids;
+	}
+
+	for (i = 0; i < num_nodes; i++) {
+
+		printk("PGREPL: populating pgtable cache node[%zu] with %zu tables\n",
+				i, numpgtables);
+
+		nodes_clear(nm);
+		node_set(i, nm);
+
+		for (j = 0; j < numpgtables; j++) {
+			/* allocte a new page, and place it in the replica list */
+			p = __alloc_pages_nodemask(PGALLOC_GFP, 0, i, &nm);
+			// p = __alloc_pages_nodemask_pgtrepl(0, i, &nm);
+			if (p) {
+				check_page_node(p, i);
+				p->replica = pgtable_cache[i];
+				pgtable_cache[i] = p;
+				pgtable_cache_size[i]++;
+			} else {
+				break;
+			}
+		}
+
+		printk("PGREPL: node[%lu] populated with %zu  tables\n",
+				i, pgtable_cache_size[i]);
+
+	}
+
+	spin_unlock(&pgtable_cache_lock);
+
+	return 0;
+}
+
+int pgtable_cache_drain(void)
+{
+	int i;
+	struct page *p;
+	spin_lock(&pgtable_cache_lock);
+
+	for (i = 0; i < MAX_SUPPORTED_NODE; i++) {
+		p = pgtable_cache[i];
+		while(p) {
+			pgtable_cache[i] = p->replica;
+			pgtable_cache_size[i]--;
+			p->replica = NULL;
+			// __free_page(p);
+			__free_pages((p), 0);
+			p = pgtable_cache[i];
+
+		}
+	}
+
+	spin_unlock(&pgtable_cache_lock);
+
+	return 0;
+}
+
+struct page *pgtable_cache_alloc(int node)
+{
+	struct page *p;
+	nodemask_t nm;
+
+	if (unlikely(node >= MAX_SUPPORTED_NODE)) {
+		panic("PTREPL: WARNING NODE ID %u >= %u. Override to 0 \n",
+				node, nr_node_ids);
+		node = 0;
+	}
+
+	if (pgtable_cache[node] == NULL) {
+		nm = NODE_MASK_NONE;
+		node_set(node, nm);
+
+		/* allocte a new page, and place it in the replica list */
+		p = __alloc_pages_nodemask(PGALLOC_GFP, 0, node, &nm);
+		// p = __alloc_pages_nodemask_pgtrepl(0, node, &nm);
+		check_page_node(p, node);
+		return p;
+	}
+
+	spin_lock(&pgtable_cache_lock);
+	p = pgtable_cache[node];
+	pgtable_cache[node] = p->replica;
+	pgtable_cache_size[node]--;
+	p->replica = NULL;
+	spin_unlock(&pgtable_cache_lock);
+
+	/* need to clear the page */
+	clear_page(page_to_virt(p));
+
+	check_page_node(p, node);
+
+	return p;
+}
+
+void pgtable_cache_free(int node, struct page *p)
+{
+	check_page_node(p, node);
+	spin_lock(&pgtable_cache_lock);
+	/* set the replica to NULL */
+	p->replica = NULL;
+
+	p->replica = pgtable_cache[node];
+	pgtable_cache[node] = p;
+	pgtable_cache_size[node]++;
+	spin_unlock(&pgtable_cache_lock);
+}
 #endif
