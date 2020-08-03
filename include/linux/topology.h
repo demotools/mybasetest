@@ -33,9 +33,10 @@
 #include <linux/mmzone.h>
 #include <linux/smp.h>
 #include <linux/percpu.h>
-#include <asm/topology.h>
 #ifdef CONFIG_PGTABLE_REPLICATION
-//#include <asm/numa.h>
+#include <asm/numa.h>
+#else
+#include <asm/topology.h>
 #endif
 
 #ifndef nr_cpus_node

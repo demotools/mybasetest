@@ -6,11 +6,6 @@
 
 #ifdef CONFIG_NUMA
 
-#ifndef CONFIG_DEBUG_PER_CPU_MAPS
-/* Returns a pointer to the cpumask of CPUs on Node 'node'. */
-static inline const struct cpumask *cpumask_of_node(int node);
-#endif
-
 struct pci_bus;
 int pcibus_to_node(struct pci_bus *bus);
 #define cpumask_of_pcibus(bus)	(pcibus_to_node(bus) == -1 ?		\
