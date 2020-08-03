@@ -14,6 +14,7 @@
 #include <asm/pgalloc.h>
 #include <asm/page.h>
 #include <asm/tlbflush.h>
+#include <asm/pgtable.h>
 
 static struct kmem_cache *pgd_cache __ro_after_init;
 #ifdef CONFIG_PGTABLE_REPLICATION
