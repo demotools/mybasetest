@@ -781,14 +781,6 @@ __SYSCALL(__NR_rseq, sys_rseq)
 #define __NR_kexec_file_load 294
 __SYSCALL(__NR_kexec_file_load,     sys_kexec_file_load)
 
-#define __NR_set_pgtblreplpolicy 440
-// __SYSCALL(__NR_set_pgtblreplpolicy,     sys_set_pgtblreplpolicy)
-__SC_COMP(__NR_set_pgtblreplpolicy, sys_set_pgtblreplpolicy, compat_sys_set_pgtblreplpolicy)
-
-#define __NR_get_pgtblreplpolicy 441
-// __SYSCALL(__NR_get_pgtblreplpolicy,     sys_get_pgtblreplpolicy)
-__SC_COMP(__NR_get_pgtblreplpolicy, sys_get_pgtblreplpolicy, compat_sys_get_pgtblreplpolicy)
-
 /* 295 through 402 are unassigned to sync up with generic numbers, don't use */
 #if __BITS_PER_LONG == 32
 #define __NR_clock_gettime64 403
@@ -865,8 +857,16 @@ __SYSCALL(__NR_openat2, sys_openat2)
 #define __NR_pidfd_getfd 438
 __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
 
+#define __NR_set_pgtblreplpolicy 439
+// __SYSCALL(__NR_set_pgtblreplpolicy,     sys_set_pgtblreplpolicy)
+__SC_COMP(__NR_set_pgtblreplpolicy, sys_set_pgtblreplpolicy, compat_sys_set_pgtblreplpolicy)
+
+#define __NR_get_pgtblreplpolicy 440
+// __SYSCALL(__NR_get_pgtblreplpolicy,     sys_get_pgtblreplpolicy)
+__SC_COMP(__NR_get_pgtblreplpolicy, sys_get_pgtblreplpolicy, compat_sys_get_pgtblreplpolicy)
+
 #undef __NR_syscalls
-#define __NR_syscalls 439
+#define __NR_syscalls 441
 
 /*
  * 32 bit systems traditionally used different

@@ -1004,6 +1004,8 @@ asmlinkage long sys_pidfd_send_signal(int pidfd, int sig,
 				       unsigned int flags);
 asmlinkage long sys_pidfd_getfd(int pidfd, int fd, unsigned int flags);
 
+asmlinkage long sys_set_pgtblreplpolicy(int mode, const unsigned long __user *nmask,unsigned long maxnode);
+asmlinkage int sys_get_pgtblreplpolicy(int __user *policy,unsigned long __user *nmask,unsigned long maxnode,unsigned long addr,unsigned long flags);
 /*
  * Architecture-specific system calls
  */
