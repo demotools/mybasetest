@@ -14,7 +14,6 @@
 #include <asm/pgalloc.h>
 #include <asm/page.h>
 #include <asm/tlbflush.h>
-#include <asm/pgtable.h>
 
 static struct kmem_cache *pgd_cache __ro_after_init;
 #ifdef CONFIG_PGTABLE_REPLICATION
@@ -475,7 +474,7 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 		check_page_node(page_pte, i);
 
 		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
-		native_norepl_set_pte(ptep, pteval);
+		native_set_pte(ptep, pteval);
 	}
 }
 
@@ -519,7 +518,7 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 			page_pmd = page_pmd->replica;
 			check_page_node(page_pmd, i);
 			pmdp = (pmd_t *)((long)page_to_virt(page_pmd) + offset);
-			native_norepl_set_pmd(pmdp, pmdval);
+			native_set_pmd(pmdp, pmdval);
 		}
 		return;
 	}
@@ -536,7 +535,7 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 
 		// pmdval = native_make_pmd((page_to_pfn(page_pte) << PAGE_SHIFT) | pmd_flags(pmdval));
 
-		native_norepl_set_pmd(pmdp, pmdval);
+		native_set_pmd(pmdp, pmdval);
 	}
 }
 
@@ -572,7 +571,7 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 			page_pud = page_pud->replica;
 			check_page_node(page_pud, i);
 			pudp = (pud_t *)((long)page_to_virt(page_pud) + offset);
-			native_norepl_set_pud(pudp, pudval);
+			native_set_pud(pudp, pudval);
 		}
 		return;
 	}
@@ -586,7 +585,7 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 
 		pudp = (pud_t *)((long)page_to_virt(page_pud) + offset);
 		// pudval = native_make_pud((page_to_pfn(page_pmd) << PAGE_SHIFT) | pud_flags(pudval));
-		native_norepl_set_pud(pudp, pudval);
+		native_set_pud(pudp, pudval);
 	}
 }
 
@@ -618,7 +617,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 			page_pgd = page_pgd->replica;
 			check_page_node(page_pgd, i);
 			pgdp = (pgd_t *)((long)page_to_virt(page_pgd) + offset);
-			native_norepl_set_pgd(pgdp, pgdval);
+			native_set_pgd(pgdp, pgdval);
 		}
 		return;
 	}
@@ -633,7 +632,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 		pgdp = (pgd_t *)((long)page_to_virt(page_pgd) + offset);
 
 		// pgdval = native_make_pgd((page_to_pfn(page_pud) << PAGE_SHIFT) | pgd_flags(pgdval));
-		native_norepl_set_pgd(pgdp, pgdval);
+		native_set_pgd(pgdp, pgdval);
 	}
 }
 
