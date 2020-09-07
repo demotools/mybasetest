@@ -14,6 +14,7 @@
 #include <asm/pgalloc.h>
 #include <asm/page.h>
 #include <asm/tlbflush.h>
+#include <asm/mmu_context.h>
 
 static struct kmem_cache *pgd_cache __ro_after_init;
 #ifdef CONFIG_PGTABLE_REPLICATION
@@ -882,6 +883,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		printk("PGREPL: DISABLE MITOSIS DUE TO ERROR\n");
 
 	}
+	// cpu_do_switch_mm(mm->pgd,mm);
 	cpu_switch_mm(mm->pgd,mm);
 	// pgtable_repl_write_cr3(__native_read_cr3());
 	return err;
