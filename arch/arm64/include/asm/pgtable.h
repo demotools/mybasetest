@@ -246,7 +246,8 @@ static inline pte_t pte_mkdevmap(pte_t pte)
 static inline void set_pte(pte_t *ptep, pte_t pte)
 {
 	WRITE_ONCE(*ptep, pte);
-
+	//pgtrepl
+	pgtable_repl_set_pte(ptep, pte);
 	/*
 	 * Only if the new pte is valid and kernel, otherwise TLB maintenance
 	 * or update_mmu_cache() have the necessary barriers.
@@ -255,8 +256,6 @@ static inline void set_pte(pte_t *ptep, pte_t pte)
 		dsb(ishst);
 		isb();
 	}
-	//pgtrepl
-	pgtable_repl_set_pte(ptep, pte);
 }
 
 static inline void native_set_pte(pte_t *ptep, pte_t pte)
@@ -543,13 +542,12 @@ static inline void set_pmd(pmd_t *pmdp, pmd_t pmd)
 #endif /* __PAGETABLE_PMD_FOLDED */
 
 	WRITE_ONCE(*pmdp, pmd);
-
+	//pgtrepl
+	pgtable_repl_set_pmd(pmdp, pmd);
 	if (pmd_valid(pmd)) {
 		dsb(ishst);
 		isb();
-	}
-	//pgtrepl
-	pgtable_repl_set_pmd(pmdp, pmd);
+	}	
 }
 
 static inline void native_set_pmd(pmd_t *pmdp, pmd_t pmd)
@@ -643,13 +641,12 @@ static inline void set_pud(pud_t *pudp, pud_t pud)
 #endif /* __PAGETABLE_PUD_FOLDED */
 
 	WRITE_ONCE(*pudp, pud);
-
+	//pgtrepl
+	pgtable_repl_set_pud(pudp, pud);
 	if (pud_valid(pud)) {
 		dsb(ishst);
 		isb();
-	}
-    //pgtrepl
-	pgtable_repl_set_pud(pudp, pud);
+	}  
 }
 
 static inline void native_set_pud(pud_t *pudp, pud_t pud)
@@ -741,10 +738,10 @@ static inline void set_pgd(pgd_t *pgdp, pgd_t pgd)
 	}
 
 	WRITE_ONCE(*pgdp, pgd);
+	pgtable_repl_set_pgd(pgdp, pgd);
 	dsb(ishst);
 	isb();
-	//pgtrepl
-	pgtable_repl_set_pgd(pgdp, pgd);
+	//pgtrepl	
 }
 static inline void native_set_pgd(pgd_t *pgdp, pgd_t pgd)
 {

@@ -458,7 +458,7 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
 	}
-
+	//因为ptep 是 pte表中的一个entry的地址，我们为了获取这个entry 对于这个pte表的offset，所以需要获取这个表的page，然后通过page得到这个page的虚拟地址， 然后就能用ptep和这个虚拟地址计算offset
 	page_pte = page_of_ptable_entry(ptep);
 	check_page(page_pte);
 
@@ -532,17 +532,16 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 		check_page_node(page_pte, i);
 
 		pmdp = (pmd_t *)((long)page_to_virt(page_pmd) + offset);
-
+		pmdval = __pmd(__phys_to_pmd_val(page_to_phys(page_pte)) | PMD_TYPE_TABLE);
 		// pmdval = native_make_pmd((page_to_pfn(page_pte) << PAGE_SHIFT) | pmd_flags(pmdval));
-
 		native_set_pmd(pmdp, pmdval);
 	}
 }
 
-static inline pud_t native_make_pud(pmdval_t val)
-{
-	return (pud_t) { val };
-}
+// static inline pud_t native_make_pud(pmdval_t val)
+// {
+// 	return (pud_t) { val };
+// }
 void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 {
 	int i;
@@ -584,6 +583,7 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 		check_page_node(page_pmd, i);
 
 		pudp = (pud_t *)((long)page_to_virt(page_pud) + offset);
+		pudval = __pud(__phys_to_pud_val(page_to_phys(page_pmd)) | PMD_TYPE_TABLE);
 		// pudval = native_make_pud((page_to_pfn(page_pmd) << PAGE_SHIFT) | pud_flags(pudval));
 		native_set_pud(pudp, pudval);
 	}
@@ -606,12 +606,12 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	if (page_pgd->replica == NULL) {
 		return;
 	}
-
+	//取出pgdp 在pgd 中的偏移 offset
 	offset = ((long)pgdp & ~PAGE_MASK);
 	check_offset(offset);
 
 	page_pud = pgd_page(pgdval);
-
+	//如果pud 的page 还没有被放入内存中，那么就直接把pgdval这个地址值设置到各节点的副本pgd表中。
 	if (!page_pud || pgd_none(pgdval) || !pgd_present(pgdval)) {
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pgd = page_pgd->replica;
@@ -621,7 +621,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 		}
 		return;
 	}
-
+	//如果pud 的page 存在，那就重新计算各节点副本pud的地址值，并放入副本的pgd表中。
 	for (i = 0; i < nr_node_ids; i++) {
 		page_pud = page_pud->replica;
 		page_pgd = page_pgd->replica;
@@ -630,7 +630,8 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 		check_page_node(page_pud, i);
 
 		pgdp = (pgd_t *)((long)page_to_virt(page_pgd) + offset);
-
+		//参考了pgd_populate 中生成pudp的方法
+		pgdval = __pgd(__phys_to_pgd_val(page_to_phys(page_pud)) | PUD_TYPE_TABLE);
 		// pgdval = native_make_pgd((page_to_pfn(page_pud) << PAGE_SHIFT) | pgd_flags(pgdval));
 		native_set_pgd(pgdp, pgdval);
 	}
