@@ -783,6 +783,8 @@ static inline unsigned long pgd_page_vaddr(pgd_t pgd)
 // {
 // 	return (unsigned long)__va(pud_val(pud) & pud_pfn_mask(pud));
 // }
+
+//这个函数的作用是，在已经运行的进程中，开启页表复制功能。  那么会遍历已存在的页表，全部进行复制操作。
 int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 {
 	int err = 0;
@@ -816,13 +818,14 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 	pgtable_repl_pgd_alloc(mm);
 	//	if (!mm->repl_pgd_enabled) {panic("FOOOF");}
 	//	printk("%s:%u p4d=%lx..%lx\n", __FUNCTION__, __LINE__, (long)p4d, (long)p4d + 4095);
-	for (pgd_idx = 0; pgd_idx < pgd_index(PAGE_OFFSET); pgd_idx++) {
+	for (pgd_idx = 0; pgd_idx < 512; pgd_idx++) {
 		if (pgd_none(pgd[pgd_idx])) {
 			continue;
 		}
 
-		pud = (pud_t *)pgd_page_vaddr(pgd[pgd_idx]);
-
+		// pud = (pud_t *)pgd_page_vaddr(pgd[pgd_idx]);
+		pud = (pud_t *)page_to_virt(pgd_page(pgd[pgd_idx]));
+	
 		pgtable_repl_alloc_pud(mm, page_to_pfn(page_of_ptable_entry(pud)));
 		//	printk("%s:%u set_p4d(p4d[%zu], 0x%lx, 0x%lx\n",__FUNCTION__, __LINE__,  p4d_idx, _PAGE_TABLE | __pa(pud_new), p4d_val(__p4d(_PAGE_TABLE | __pa(pud_new))));
 		set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
@@ -837,8 +840,9 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 			// 	continue;
 			// }
 
-			// pmd =  (pmd_t *)pud_page_vaddr(pud[pud_idx]);
-
+			//  pmd =  (pmd_t *)pud_page_vaddr(pud[pud_idx]);
+			pmd =  (pmd_t *)page_to_virt(pud_page(pud[pud_idx]));
+			 
 			pgtable_repl_alloc_pmd(mm, page_to_pfn(page_of_ptable_entry(pmd)));
 			set_pud(pud + pud_idx,pud[pud_idx]);
 
@@ -854,7 +858,8 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 				// }
 
 				/* get the pte page */
-				// pte = (pte_t *)pmd_page_vaddr(pmd[pmd_idx]);
+				//  pte = (pte_t *)pmd_page_vaddr(pmd[pmd_idx]);
+				pte = (pte_t *)page_to_virt(pmd_page(pmd[pmd_idx]));
 
 				pgtable_repl_alloc_pte(mm, page_to_pfn(page_of_ptable_entry(pte)));
 
@@ -877,8 +882,8 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		printk("PGREPL: DISABLE MITOSIS DUE TO ERROR\n");
 
 	}
+	cpu_switch_mm(mm->pgd,mm);
 	// pgtable_repl_write_cr3(__native_read_cr3());
-
 	return err;
 }
 
