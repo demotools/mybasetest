@@ -222,21 +222,21 @@ efi_status_t efi_exit_boot_services(void *handle,
 				    efi_exit_boot_map_processing priv_func)
 {
 	efi_status_t status;
-
+	pr_efi("there 1...\n");
 	status = efi_get_memory_map(map);
-
+	pr_efi("there 2...\n");
 	if (status != EFI_SUCCESS)
 		goto fail;
-
+	pr_efi("there 3...\n");
 	status = priv_func(map, priv);
 	if (status != EFI_SUCCESS)
 		goto free_map;
-
+	pr_efi("there 4...\n");
 	if (efi_disable_pci_dma)
 		efi_pci_disable_bridge_busmaster();
-
+	pr_efi("there 5...\n");
 	status = efi_bs_call(exit_boot_services, handle, *map->key_ptr);
-
+	pr_efi("there 6...\n");
 	if (status == EFI_INVALID_PARAMETER) {
 		/*
 		 * The memory map changed between efi_get_memory_map() and
@@ -270,11 +270,11 @@ efi_status_t efi_exit_boot_services(void *handle,
 
 		status = efi_bs_call(exit_boot_services, handle, *map->key_ptr);
 	}
-
+	pr_efi("there 7...\n");
 	/* exit_boot_services() was called, thus cannot free */
 	if (status != EFI_SUCCESS)
 		goto fail;
-
+	pr_efi("there 8...\n");
 	return EFI_SUCCESS;
 
 free_map:
