@@ -282,7 +282,7 @@ efi_status_t allocate_new_fdt_and_exit_boot(void *handle,
 		pr_efi_err("Unable to allocate memory for new device tree.\n");
 		goto fail;
 	}
-
+	pr_efi("here 1...\n");
 	/*
 	 * Now that we have done our final memory allocation (and free)
 	 * we can get the memory map key needed for exit_boot_services().
@@ -290,7 +290,7 @@ efi_status_t allocate_new_fdt_and_exit_boot(void *handle,
 	status = efi_get_memory_map(&map);
 	if (status != EFI_SUCCESS)
 		goto fail_free_new_fdt;
-
+	pr_efi("here 2...\n");
 	status = update_fdt((void *)fdt_addr, fdt_size,
 			    (void *)*new_fdt_addr, MAX_FDT_SIZE, cmdline_ptr,
 			    initrd_addr, initrd_size);
@@ -299,7 +299,7 @@ efi_status_t allocate_new_fdt_and_exit_boot(void *handle,
 		pr_efi_err("Unable to construct new device tree.\n");
 		goto fail_free_new_fdt;
 	}
-
+	pr_efi("here 3...\n");
 	runtime_entry_count		= 0;
 	priv.runtime_map		= runtime_map;
 	priv.runtime_entry_count	= &runtime_entry_count;
@@ -309,10 +309,10 @@ efi_status_t allocate_new_fdt_and_exit_boot(void *handle,
 
 	if (status == EFI_SUCCESS) {
 		efi_set_virtual_address_map_t *svam;
-
+		pr_efi("here 4...\n");
 		if (novamap())
 			return EFI_SUCCESS;
-
+		pr_efi("here 5...\n");
 		/* Install the new virtual address map */
 		svam = efi_system_table()->runtime->set_virtual_address_map;
 		status = svam(runtime_entry_count * desc_size, desc_size,
@@ -341,7 +341,7 @@ efi_status_t allocate_new_fdt_and_exit_boot(void *handle,
 		}
 		return EFI_SUCCESS;
 	}
-
+	pr_efi("here 6...\n");
 	pr_efi_err("Exit boot services failed.\n");
 
 fail_free_new_fdt:
