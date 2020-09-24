@@ -24,9 +24,9 @@ pgd_t *pgd_alloc(struct mm_struct *mm)
 	if (PGD_SIZE == PAGE_SIZE)
 	{
 		pgd_t * pgd = (pgd_t *)__get_free_page(gfp);
-		// mm->pgd = pgd;
-		// /* this will replicate the pgd */
-		// pgtable_repl_pgd_alloc(mm);
+		mm->pgd = pgd;
+		/* this will replicate the pgd */
+		pgtable_repl_pgd_alloc(mm);
 		return pgd;
 	}
 	else
