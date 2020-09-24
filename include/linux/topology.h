@@ -33,11 +33,11 @@
 #include <linux/mmzone.h>
 #include <linux/smp.h>
 #include <linux/percpu.h>
-#ifdef CONFIG_PGTABLE_REPLICATION
-#include <asm/numa.h>
-#else
+// #ifdef CONFIG_PGTABLE_REPLICATION
+// #include <asm/numa.h>
+// #else
 #include <asm/topology.h>
-#endif
+// #endif
 
 #ifndef nr_cpus_node
 #define nr_cpus_node(node) cpumask_weight(cpumask_of_node(node))

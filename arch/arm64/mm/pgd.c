@@ -381,6 +381,9 @@ static inline void __pgtable_repl_release_one(unsigned long pfn)
 {
 	int i;
 	struct page *p, *p2, *pcurrent;
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
 	p = pfn_to_page(pfn);
 	if (unlikely(p == NULL)) {
 		return;
