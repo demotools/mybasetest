@@ -196,7 +196,7 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 	}
 	if (pgtable_repl_initialized)
 	{
-		pgtable_repl_initialized = false；
+		pgtable_repl_initialized = false;
 	}
 	
 	return 0;
