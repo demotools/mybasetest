@@ -194,6 +194,11 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 			printk("PTREPL: set state to %s.\n", (pgtable_repl_activated ? "activated" : "deactivated"));
 		}
 	}
+	if (pgtable_repl_initialized)
+	{
+		pgtable_repl_initialized = false；
+	}
+	
 	return 0;
 	if (!pgtable_repl_initialized) {
 		mm->repl_pgd_enabled = false;
