@@ -184,8 +184,9 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 		mm->repl_pgd_enabled = false;
 		return 0;
 	}
-	return 0;
+	
 	if (unlikely(!pgtable_repl_initialized)) {
+		return 0;
 		pgtable_repl_initialized = (nr_node_ids != MAX_NUMNODES);
 		if (pgtable_repl_initialized) {
 			if (pgtable_fixed_node == -1) {
@@ -934,6 +935,7 @@ int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __u
 		} else {
 			/* replication enabled */
 			printk("Page table allocation set to replicated\n");
+			pgtable_repl_initialized = true;
 			pgtable_repl_activated = true;
 			pgtable_fixed_node = 0;
 			pgtable_fixed_nodemask = NODE_MASK_NONE;
