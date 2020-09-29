@@ -268,6 +268,7 @@ extern bool pgtable_repl_initialized;
 #endif
 void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
 {
+	printk("PTREP: Called cpu_do_switch_mm \n");
 	unsigned long ttbr1 = read_sysreg(ttbr1_el1);
 	unsigned long asid = ASID(mm);
 	unsigned long ttbr0;
@@ -277,6 +278,7 @@ void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
 	{
 		pgd = mm_get_pgd_for_node(mm);
 		pgd_phys = virt_to_phys(pgd);
+		printk("%s:%u mm=%lx, pgd=%lx, pgd_phys=%lx\n", __FUNCTION__, __LINE__, (long)mm, (long)pgd,(long)pgd_phys);
 	}
 	#endif
 	ttbr0 = phys_to_ttbr(pgd_phys);
@@ -298,6 +300,8 @@ void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
 	write_sysreg(ttbr0, ttbr0_el1);
 	isb();
 	post_ttbr_update_workaround();
+
+	printk("PTREP: Called cpu_do_switch_mm  done\n");
 }
 
 static int asids_update_limit(void)

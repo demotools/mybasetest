@@ -210,7 +210,7 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 	}
 
 	printk("PTREPL: enable replication for the pgd of process\n");
-
+	printk("[mitosis] nr_node_ids=%d.\n",nr_node_ids);
 	// replication is enabled for this domain
 	mm->repl_pgd_enabled = true;
 
@@ -230,7 +230,7 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 
 		/* set the replica pgd poiter */
 		mm->repl_pgd[i] = (pgd_t *) page_to_virt(pgd2->replica);
-
+		printk("[mitosis] pgd_alloc mm->repl_pgd[%d]=%lx.\n",i,(long)mm->repl_pgd[i]);
 		pgd2 = pgd2->replica;
 	}
 
@@ -248,7 +248,7 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 		panic("%s:%d: PTREPL: NOT THE ASAME????\n", __FUNCTION__, __LINE__);
 	}
 	#endif
-
+	printk("PTREPL: alloc pgd success\n");
 	return 0;
 	cleanup:
 
@@ -423,16 +423,19 @@ static inline void __pgtable_repl_release_one(unsigned long pfn)
 
 void pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long pfn)
 {
+	// printk("PTREP: Called pgtable_repl_alloc_pte\n");
 	__pgtable_repl_alloc_one(mm, pfn);
 }
 
 void pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long pfn)
 {
+	// printk("PTREP: Called pgtable_repl_alloc_pmd\n");
 	__pgtable_repl_alloc_one(mm, pfn);
 }
 
 void pgtable_repl_alloc_pud(struct mm_struct *mm, unsigned long pfn)
 {
+	// printk("PTREP: Called pgtable_repl_alloc_pud\n");
 	__pgtable_repl_alloc_one(mm, pfn);
 }
 
@@ -460,6 +463,7 @@ void pgtable_repl_release_pud(unsigned long pfn)
 
 void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 {
+	// printk("PTREP: Called pgtable_repl_set_pte\n");
 	int i;
 	long offset;
 	struct page *page_pte;
@@ -485,6 +489,7 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
 		native_set_pte(ptep, pteval);
 	}
+	// printk("PTREP: Called pgtable_repl_set_pte  done\n");
 }
 
 
@@ -501,6 +506,7 @@ static inline pmd_t native_make_pmd(pmdval_t val)
 
 void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 {
+	// printk("PTREP: Called pgtable_repl_set_pmd \n");
 	int i;
 	long offset;
 	struct page *page_pmd, *page_pte;
@@ -545,6 +551,7 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 		// pmdval = native_make_pmd((page_to_pfn(page_pte) << PAGE_SHIFT) | pmd_flags(pmdval));
 		native_set_pmd(pmdp, pmdval);
 	}
+	// printk("PTREP: Called pgtable_repl_set_pmd  done\n");
 }
 
 // static inline pud_t native_make_pud(pmdval_t val)
@@ -553,6 +560,7 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 // }
 void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 {
+	// printk("PTREP: Called pgtable_repl_set_pud\n");
 	int i;
 	long offset;
 	struct page *page_pud, *page_pmd;
@@ -596,6 +604,7 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 		// pudval = native_make_pud((page_to_pfn(page_pmd) << PAGE_SHIFT) | pud_flags(pudval));
 		native_set_pud(pudp, pudval);
 	}
+	// printk("PTREP: Called pgtable_repl_set_pud  done\n");
 }
 
 void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
@@ -622,6 +631,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	page_pud = pgd_page(pgdval);
 	//如果pud 的page 还没有被放入内存中，那么就直接把pgdval这个地址值设置到各节点的副本pgd表中。
 	if (!page_pud || pgd_none(pgdval) || !pgd_present(pgdval)) {
+		printk("PTREP: Called pgtable_repl_set_pgd  !page_pud \n");
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pgd = page_pgd->replica;
 			check_page_node(page_pgd, i);
@@ -813,7 +823,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 	if (unlikely(mm->repl_pgd_enabled)) {
 		return 0;
 	}
-
+	printk("PTREP: Called pgtbl_repl_prepare_replication\n");
 	pgd = (pgd_t *)mm->pgd;
 	task_lock(current);
 	spin_lock(&mm->page_table_lock);
@@ -822,28 +832,32 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 	mm->repl_pgd_nodes = nodes;
 	mm->repl_pgd_enabled = true;
 
+	int pud_num = 0;
+	int pmd_num = 0;
+	int pte_num = 0;
 
 	/* this will replicate the pgd */
 	pgtable_repl_pgd_alloc(mm);
 	//	if (!mm->repl_pgd_enabled) {panic("FOOOF");}
-	//	printk("%s:%u p4d=%lx..%lx\n", __FUNCTION__, __LINE__, (long)p4d, (long)p4d + 4095);
+		printk("%s:%u p4d=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pgd, (long)pgd + 4095);
 	for (pgd_idx = 0; pgd_idx < 512; pgd_idx++) {
 		if (pgd_none(pgd[pgd_idx])) {
 			continue;
 		}
-
+		printk("PTREP: pgd_idx = %d\n",pgd_idx);
 		// pud = (pud_t *)pgd_page_vaddr(pgd[pgd_idx]);
 		pud = (pud_t *)page_to_virt(pgd_page(pgd[pgd_idx]));
-	
+		printk("%s:%u pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pud, (long)pud + 4095);
 		pgtable_repl_alloc_pud(mm, page_to_pfn(page_of_ptable_entry(pud)));
 		//	printk("%s:%u set_p4d(p4d[%zu], 0x%lx, 0x%lx\n",__FUNCTION__, __LINE__,  p4d_idx, _PAGE_TABLE | __pa(pud_new), p4d_val(__p4d(_PAGE_TABLE | __pa(pud_new))));
-		set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
+		pgtable_repl_set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
+		// set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
 
 		for (pud_idx = 0; pud_idx < 512; pud_idx++) {
 			if (pud_none(pud[pud_idx])) {
 				continue;
 			}
-
+			pud_num++;
 			// if (pud_huge(pud[pud_idx])) {
 			// 	set_pud(pud + pud_idx, pud[pud_idx]);
 			// 	continue;
@@ -860,7 +874,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 				if (pmd_none(pmd[pmd_idx])) {
 					continue;
 				}
-
+				pmd_num++;
 				// if (pmd_huge(pmd[pmd_idx])) {
 				// 	set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
 				// 	continue;
@@ -878,12 +892,13 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 					if (pte_none(pte[pte_idx])) {
 						continue;
 					}
+					pte_num++;
 					set_pte(pte + pte_idx, pte[pte_idx]);
 				}
 			}
 		}
 	}
-
+	printk("%s:%u pud_num=%d, pmd_num=%d, pte_num=%d\n", __FUNCTION__, __LINE__, pud_num, pmd_num,pte_num);
 	spin_unlock(&mm->page_table_lock);
 	task_unlock(current);
 	if (err) {
@@ -891,9 +906,11 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		printk("PGREPL: DISABLE MITOSIS DUE TO ERROR\n");
 
 	}
+	
 	// cpu_do_switch_mm(mm->pgd,mm);
 	cpu_switch_mm(mm->pgd,mm);
 	// pgtable_repl_write_cr3(__native_read_cr3());
+	printk("PTREP: Called pgtbl_repl_prepare_replication  done\n");
 	return err;
 }
 

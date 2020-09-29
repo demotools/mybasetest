@@ -1655,7 +1655,7 @@ static long kernel_set_pgtlbreplpolicy(int mode, const unsigned long __user *nma
 
 			printk("[mitosis] pgtable replication %s for mm=%lx.\n",
 					mm->repl_pgd_enabled ? "enabled" : "disabled", (long)mm);
-
+			printk("[mitosis] pgtable replication err=%d.\n",err);
 			return err;
 		} else {
 			if (!nodes_equal(mm->repl_pgd_nodes, nodes)) {
