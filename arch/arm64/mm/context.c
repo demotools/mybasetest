@@ -268,7 +268,8 @@ extern bool pgtable_repl_initialized;
 #endif
 void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
 {
-	printk("PTREP: Called cpu_do_switch_mm \n");
+	printk("[mitosis] cpu_do_switch_mm  for mm=%lx.\n",(long)mm);
+	// printk("PTREP: Called cpu_do_switch_mm \n");
 	unsigned long ttbr1 = read_sysreg(ttbr1_el1);
 	unsigned long asid = ASID(mm);
 	unsigned long ttbr0;
@@ -301,7 +302,7 @@ void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
 	isb();
 	post_ttbr_update_workaround();
 
-	printk("PTREP: Called cpu_do_switch_mm  done\n");
+	// printk("PTREP: Called cpu_do_switch_mm  done\n");
 }
 
 static int asids_update_limit(void)
