@@ -846,8 +846,8 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		if (pgd_none(pgd[pgd_idx])) {
 			continue;
 		}
-		printk("PTREP: pgd_idx = %d，and pgd=%lx\n",pgd_idx,(long)(pgd + pgd_idx));
-		printk("%s:%u  pgd[%d]=%lx\n", __FUNCTION__, __LINE__, pgd_idx, (long)pgd[pgd_idx]);
+		printk("PTREP: pgd_idx = %ld，and pgd=%lx\n",pgd_idx,(long)(pgd + pgd_idx));
+		printk("PTREP: pgd[%ld]=%lx\n",pgd_idx, (long)pgd_val(pgd[pgd_idx]));
 		// pud = (pud_t *)pgd_page_vaddr(pgd[pgd_idx]);  //origin
 		pud = (pud_t *)page_to_virt(pgd_page(pgd[pgd_idx])); //first version
 		printk("%s:%u first version pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pud, (long)pud + 4095);
