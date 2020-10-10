@@ -173,12 +173,7 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 	int i;
 	struct page *pgd, *pgd2;
 
-	if (!pgtable_repl_activated) {
-		return 0;
-	}
-
 	for (i = 0; i < sizeof(mm->repl_pgd) / sizeof(mm->repl_pgd[0]); i++) {
-		
 		/* set the first replicatin entry */
 		mm->repl_pgd[i] = mm->pgd;
 	}
@@ -192,7 +187,9 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 	
 	
 	if (unlikely(!pgtable_repl_initialized)) {
-		//return 0;
+		if (!pgtable_repl_activated) {
+		return 0;
+		}
 		pgtable_repl_initialized = (nr_node_ids != MAX_NUMNODES);
 		if (pgtable_repl_initialized) {
 			if (pgtable_fixed_node == -1) {
@@ -284,7 +281,7 @@ void pgtable_repl_pgd_free(struct mm_struct *mm, pgd_t *pgd)
 		}
 		return;
 	}
-
+	printk("[mitosis] pgtable_repl_pgd_free mm->pgd=%lx.\n",(long)mm->pgd);
 	pgd_page = pgd_page->replica;
 
 	/* XXX: check if there are infact replicas */
@@ -659,8 +656,10 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 		//参考了pgd_populate 中生成pudp的方法
 		pgdval = __pgd(__phys_to_pgd_val(page_to_phys(page_pud)) | PUD_TYPE_TABLE);
 		// pgdval = native_make_pgd((page_to_pfn(page_pud) << PAGE_SHIFT) | pgd_flags(pgdval));
+		printk("PTREP: set_pgd  offset=%ld   pdgval=%lx\n",offset, (long)pgd_val(pgdval));
 		native_set_pgd(pgdp, pgdval);
 	}
+	printk("PTREP: Called pgtable_repl_set_pgd  done \n");
 }
 
 /*
@@ -860,6 +859,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		
 		// pud = (pud_t *)__va(pgd_val(pgd[pgd_idx]));
 		printk("%s:%u __va pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)(pud_t *)__va(pgd_val(pgd[pgd_idx])), (long)(pud_t *)__va(pgd_val(pgd[pgd_idx])) + 4095);
+		printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pud)), (long)virt_to_pfn(pud));
 		pgtable_repl_alloc_pud(mm, page_to_pfn(page_of_ptable_entry(pud)));
 		//	printk("%s:%u set_p4d(p4d[%zu], 0x%lx, 0x%lx\n",__FUNCTION__, __LINE__,  p4d_idx, _PAGE_TABLE | __pa(pud_new), p4d_val(__p4d(_PAGE_TABLE | __pa(pud_new))));
 		pgtable_repl_set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
