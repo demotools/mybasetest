@@ -173,6 +173,10 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 	int i;
 	struct page *pgd, *pgd2;
 
+	if (!pgtable_repl_activated) {
+		return 0;
+	}
+
 	for (i = 0; i < sizeof(mm->repl_pgd) / sizeof(mm->repl_pgd[0]); i++) {
 		
 		/* set the first replicatin entry */
@@ -186,8 +190,9 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 		return 0;
 	}
 	
+	
 	if (unlikely(!pgtable_repl_initialized)) {
-		return 0;
+		//return 0;
 		pgtable_repl_initialized = (nr_node_ids != MAX_NUMNODES);
 		if (pgtable_repl_initialized) {
 			if (pgtable_fixed_node == -1) {
@@ -823,6 +828,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 
 	/* if it already has been enbaled, don't do anything */
 	if (unlikely(mm->repl_pgd_enabled)) {
+		printk("PTREP: already has been enbaled\n");
 		return 0;
 	}
 	printk("PTREP: Called pgtbl_repl_prepare_replication\n");
@@ -874,7 +880,8 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 			pmd =  (pmd_t *)page_to_virt(pud_page(pud[pud_idx]));
 			 
 			pgtable_repl_alloc_pmd(mm, page_to_pfn(page_of_ptable_entry(pmd)));
-			set_pud(pud + pud_idx,pud[pud_idx]);
+			// set_pud(pud + pud_idx,pud[pud_idx]);
+			pgtable_repl_set_pud(pud + pud_idx,pud[pud_idx]);
 
 			for (pmd_idx = 0; pmd_idx < 512; pmd_idx++) {
 
@@ -892,15 +899,16 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 				pte = (pte_t *)page_to_virt(pmd_page(pmd[pmd_idx]));
 
 				pgtable_repl_alloc_pte(mm, page_to_pfn(page_of_ptable_entry(pte)));
-
-				set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
+				pgtable_repl_set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
+				// set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
 
 				for (pte_idx = 0; pte_idx < 512; pte_idx++) {
 					if (pte_none(pte[pte_idx])) {
 						continue;
 					}
 					pte_num++;
-					set_pte(pte + pte_idx, pte[pte_idx]);
+					// set_pte(pte + pte_idx, pte[pte_idx]);
+					pgtable_repl_set_pte(pte + pte_idx, pte[pte_idx]);
 				}
 			}
 		}
