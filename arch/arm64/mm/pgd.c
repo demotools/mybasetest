@@ -125,7 +125,7 @@ static DEFINE_SPINLOCK(pgtable_cache_lock);
  * ==================================================================
  */
 
-// #define DEBUG_PGTABLE_REPLICATION
+ #define DEBUG_PGTABLE_REPLICATION
 #ifdef DEBUG_PGTABLE_REPLICATION
 // #include <linux/mmzone.h>
 #define check_page(p) \
@@ -174,6 +174,7 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 	struct page *pgd, *pgd2;
 
 	for (i = 0; i < sizeof(mm->repl_pgd) / sizeof(mm->repl_pgd[0]); i++) {
+		
 		/* set the first replicatin entry */
 		mm->repl_pgd[i] = mm->pgd;
 	}
@@ -208,9 +209,10 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 	if (mm->repl_pgd_enabled == false ) {
 		return 0;
 	}
-
+	printk("PTREPL: pgtable_repl_pgd_alloc. set initial mm->repl_pgd[%d]\n",i);
 	printk("PTREPL: enable replication for the pgd of process\n");
 	printk("[mitosis] nr_node_ids=%d.\n",nr_node_ids);
+	printk("[mitosis] pgd_alloc origin mm->pgd=%lx.\n",(long)mm->pgd);
 	// replication is enabled for this domain
 	mm->repl_pgd_enabled = true;
 
@@ -839,14 +841,17 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 	/* this will replicate the pgd */
 	pgtable_repl_pgd_alloc(mm);
 	//	if (!mm->repl_pgd_enabled) {panic("FOOOF");}
-		printk("%s:%u p4d=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pgd, (long)pgd + 4095);
+		printk("%s:%u pgd=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pgd, (long)pgd + 4095);
 	for (pgd_idx = 0; pgd_idx < 512; pgd_idx++) {
 		if (pgd_none(pgd[pgd_idx])) {
 			continue;
 		}
-		printk("PTREP: pgd_idx = %d\n",pgd_idx);
-		// pud = (pud_t *)pgd_page_vaddr(pgd[pgd_idx]);
-		pud = (pud_t *)page_to_virt(pgd_page(pgd[pgd_idx]));
+		printk("PTREP: pgd_idx = %d，and pgd=%lx\n",pgd_idx,pgd + pgd_idx);
+		// pud = (pud_t *)pgd_page_vaddr(pgd[pgd_idx]);  //origin
+		pud = (pud_t *)page_to_virt(pgd_page(pgd[pgd_idx])); //first version
+		printk("%s:%u first version pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pud, (long)pud + 4095);
+		printk("%s:%u  pgd[%d]=%lx\n", __FUNCTION__, __LINE__, pgd_idx, (long)pgd[pgd_idx]);
+		pud = (pud_t *)__va(pgd_val(pgd[pgd_idx]));
 		printk("%s:%u pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pud, (long)pud + 4095);
 		pgtable_repl_alloc_pud(mm, page_to_pfn(page_of_ptable_entry(pud)));
 		//	printk("%s:%u set_p4d(p4d[%zu], 0x%lx, 0x%lx\n",__FUNCTION__, __LINE__,  p4d_idx, _PAGE_TABLE | __pa(pud_new), p4d_val(__p4d(_PAGE_TABLE | __pa(pud_new))));
@@ -864,6 +869,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 			// }
 
 			//  pmd =  (pmd_t *)pud_page_vaddr(pud[pud_idx]);
+			//pmd =  (pmd_t *)page_to_virt(pud_page(pud[pud_idx]));
 			pmd =  (pmd_t *)page_to_virt(pud_page(pud[pud_idx]));
 			 
 			pgtable_repl_alloc_pmd(mm, page_to_pfn(page_of_ptable_entry(pmd)));
@@ -898,7 +904,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 			}
 		}
 	}
-	printk("%s:%u pud_num=%d, pmd_num=%d, pte_num=%d\n", __FUNCTION__, __LINE__, pud_num, pmd_num,pte_num);
+	printk("%s:%u all: pud_num=%d, pmd_num=%d, pte_num=%d\n", __FUNCTION__, __LINE__, pud_num, pmd_num,pte_num);
 	spin_unlock(&mm->page_table_lock);
 	task_unlock(current);
 	if (err) {
