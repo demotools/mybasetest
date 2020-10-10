@@ -851,7 +851,8 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		pud = (pud_t *)page_to_virt(pgd_page(pgd[pgd_idx])); //first version
 		printk("%s:%u first version pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pud, (long)pud + 4095);
 		printk("%s:%u  pgd[%d]=%lx\n", __FUNCTION__, __LINE__, pgd_idx, (long)pgd[pgd_idx]);
-		pud = (pud_t *)__va(pgd_val(pgd[pgd_idx]));
+		pud = (pud_t *)page_to_virt(page_of_ptable_entry(pgd[pgd_idx])); //first version
+		// pud = (pud_t *)__va(pgd_val(pgd[pgd_idx]));
 		printk("%s:%u pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pud, (long)pud + 4095);
 		pgtable_repl_alloc_pud(mm, page_to_pfn(page_of_ptable_entry(pud)));
 		//	printk("%s:%u set_p4d(p4d[%zu], 0x%lx, 0x%lx\n",__FUNCTION__, __LINE__,  p4d_idx, _PAGE_TABLE | __pa(pud_new), p4d_val(__p4d(_PAGE_TABLE | __pa(pud_new))));
