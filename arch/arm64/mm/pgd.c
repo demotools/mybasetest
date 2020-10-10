@@ -847,10 +847,11 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 			continue;
 		}
 		printk("PTREP: pgd_idx = %d，and pgd=%lx\n",pgd_idx,(long)(pgd + pgd_idx));
+		printk("%s:%u  pgd[%d]=%lx\n", __FUNCTION__, __LINE__, pgd_idx, (long)pgd[pgd_idx]);
 		// pud = (pud_t *)pgd_page_vaddr(pgd[pgd_idx]);  //origin
 		pud = (pud_t *)page_to_virt(pgd_page(pgd[pgd_idx])); //first version
 		printk("%s:%u first version pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pud, (long)pud + 4095);
-		printk("%s:%u  pgd[%d]=%lx\n", __FUNCTION__, __LINE__, pgd_idx, (long)pgd[pgd_idx]);
+		
 		pud = (pud_t *)__va(pgd_val(pgd[pgd_idx]));
 		printk("%s:%u pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pud, (long)pud + 4095);
 		pgtable_repl_alloc_pud(mm, page_to_pfn(page_of_ptable_entry(pud)));
@@ -903,6 +904,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 				}
 			}
 		}
+		printk("===================================== end of a page\n");
 	}
 	printk("%s:%u all: pud_num=%d, pmd_num=%d, pte_num=%d\n", __FUNCTION__, __LINE__, pud_num, pmd_num,pte_num);
 	spin_unlock(&mm->page_table_lock);
