@@ -343,19 +343,14 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 	}
 
 	p2 = p;
-	// int previusly_pgd_node = pfn_to_nid(pfn);
 	for (i = 0; i < nr_node_ids; i++) {
-		// //分配原始pgd的节点就不要复制新pgd了
-		// if(i == previusly_pgd_node)
-		// {
-		// 	continue;
-		// }
 		/* allocte a new page, and place it in the replica list */
 		p2->replica  = pgtable_cache_alloc(i);
 		if (p2->replica == NULL) {
 			goto cleanup;
 		}
-
+		
+		printk("[mitosis] __pgtable_repl_alloc_one origin pagep=%lx and new pagep = %lx\n",(long) page_to_virt(p),(long)page_to_virt(pgd2->replica));
 		check_page_node(p2->replica, i);
 
 		// if (ctor) {
@@ -662,7 +657,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 		//参考了pgd_populate 中生成pudp的方法
 		pgdval = __pgd(__phys_to_pgd_val(page_to_phys(page_pud)) | PUD_TYPE_TABLE);
 		// pgdval = native_make_pgd((page_to_pfn(page_pud) << PAGE_SHIFT) | pgd_flags(pgdval));
-		printk("PTREP: set_pgd offset=%lx and node0 origin pgd=%lx  and pgd+offset=%lx  and pdgval=%lx\n",offset,(long)page_to_virt(page_pgd), (long)pgdp, (long)pgd_val(pgdval));
+		printk("PTREP: set_pgd offset=%lx and node0 origin pgd=%lx  and pgd+offset=%lx  and pud=%lx and pdgval=%lx\n",offset,(long)page_to_virt(page_pgd), (long)pgdp, (long)page_to_virt(page_pud),(long)pgd_val(pgdval));
 		native_set_pgd(pgdp, pgdval);
 	}
 	printk("PTREP: Called pgtable_repl_set_pgd  done \n");
