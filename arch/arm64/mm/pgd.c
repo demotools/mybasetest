@@ -372,7 +372,7 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 	p2->replica = p;
 
 	/* let's verify */
-	#if 0
+	#if 1
 	p2 = p->replica;
 	for (i = 0; i < nr_node_ids; i++) {
 		printk("page: %lx", (long)p2);
@@ -639,6 +639,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	page_pud = pgd_page(pgdval);
 	//如果pud 的page 还没有被放入内存中，那么就直接把pgdval这个地址值设置到各节点的副本pgd表中。
 	if (!page_pud || pgd_none(pgdval) || !pgd_present(pgdval)) {
+		printk("PTREP: set_pgd  origin pgd=%lx  and pdgval=%lx\n",(long)pgdp, (long)pgd_val(pgdval));
 		printk("PTREP: Called pgtable_repl_set_pgd  !page_pud \n");
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pgd = page_pgd->replica;
