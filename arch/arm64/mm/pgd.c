@@ -848,7 +848,6 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 	mm->repl_pgd_nodes = nodes;
 	mm->repl_pgd_enabled = true;
 
-	printk("[mitosis] mm->pid=%d.\n",mm->repl_pgd_pid);
 	printk("[mitosis] pgtbl_repl_prepare_replication  for mm=%lx.\n",(long)mm);
 	/* this will replicate the pgd */
 	pgtable_repl_pgd_alloc(mm);
