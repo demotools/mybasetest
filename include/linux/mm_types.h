@@ -407,7 +407,7 @@ struct mm_struct {
 		pgd_t *    repl_pgd[8];
 		bool       repl_pgd_enabled;
 		nodemask_t repl_pgd_nodes;
-		int pid;
+		int repl_pgd_pid;
 		#endif
 
 		pgd_t * pgd;

@@ -1653,7 +1653,7 @@ static long kernel_set_pgtlbreplpolicy(int mode, const unsigned long __user *nma
 		if (nodes_empty(mm->repl_pgd_nodes)) {
 			/* prepare replication */
 			printk("[mitosis] kernel_set_pgtlbreplpolicy: pid = %d\n",current->pid);
-			mm->pid = current->pid;
+			mm->repl_pgd_pid = current->pid;
 			err = pgtbl_repl_prepare_replication(mm, nodes);
 
 			printk("[mitosis] pgtable replication %s for mm=%lx.\n",

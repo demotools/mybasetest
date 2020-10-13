@@ -848,7 +848,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 	mm->repl_pgd_nodes = nodes;
 	mm->repl_pgd_enabled = true;
 
-	printk("[mitosis] mm->pid=%d.\n",(long)mm->pid);
+	printk("[mitosis] mm->pid=%d.\n",mm->repl_pgd_pid);
 	printk("[mitosis] pgtbl_repl_prepare_replication  for mm=%lx.\n",(long)mm);
 	/* this will replicate the pgd */
 	pgtable_repl_pgd_alloc(mm);
@@ -865,7 +865,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		printk("%s:%u first version pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pud, (long)pud + 4095);
 		
 		// pud = (pud_t *)__va(pgd_val(pgd[pgd_idx]));
-		printk("%s:%u __va pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)(pud_t *)__va(pgd_val(pgd[pgd_idx])), (long)(pud_t *)__va(pgd_val(pgd[pgd_idx])) + 4095);
+		//这个换算方法结果时错误的，有偏移// printk("%s:%u __va pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)(pud_t *)__va(pgd_val(pgd[pgd_idx])), (long)(pud_t *)__va(pgd_val(pgd[pgd_idx])) + 4095);
 		printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pud)), (long)virt_to_pfn(pud));
 		pgtable_repl_alloc_pud(mm, page_to_pfn(page_of_ptable_entry(pud)));
 		//	printk("%s:%u set_p4d(p4d[%zu], 0x%lx, 0x%lx\n",__FUNCTION__, __LINE__,  p4d_idx, _PAGE_TABLE | __pa(pud_new), p4d_val(__p4d(_PAGE_TABLE | __pa(pud_new))));
