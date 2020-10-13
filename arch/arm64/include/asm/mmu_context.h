@@ -186,7 +186,7 @@ static inline void update_saved_ttbr0(struct task_struct *tsk,
 				      struct mm_struct *mm)
 {
 	u64 ttbr;
-
+	pgd_t *pgd;
 	if (!system_uses_ttbr0_pan())
 		return;
 
@@ -199,7 +199,7 @@ static inline void update_saved_ttbr0(struct task_struct *tsk,
 		if (pgtable_repl_initialized && mm->repl_pgd_enabled)
 		{
 			printk("[mitosis] update_saved_ttbr0 mm->pgd=%lx.\n",(long)mm->pgd);
-			pgd_t *pgd;
+			
 			pgd = mm_get_pgd_for_node(mm);
 			ttbr = virt_to_phys(pgd) | ASID(mm) << 48;
 			printk("[mitosis] update_saved_ttbr0 pgd=%lx.\n",(long)pgd);
