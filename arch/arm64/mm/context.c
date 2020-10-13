@@ -264,7 +264,7 @@ asmlinkage void post_ttbr_update_workaround(void)
 }
 
 #ifdef CONFIG_PGTABLE_REPLICATION
-extern bool pgtable_repl_initialized;
+// extern bool pgtable_repl_initialized;
 #endif
 void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
 {
@@ -275,7 +275,8 @@ void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
 	unsigned long ttbr0;
 	#ifdef CONFIG_PGTABLE_REPLICATION
 	pgd_t *pgd;
-	if (pgtable_repl_initialized && mm->repl_pgd_enabled)
+	// if (pgtable_repl_initialized && mm->repl_pgd_enabled)
+	if (mm->repl_pgd_enabled)
 	{
 		pgd = mm_get_pgd_for_node(mm);
 		pgd_phys = virt_to_phys(pgd);
