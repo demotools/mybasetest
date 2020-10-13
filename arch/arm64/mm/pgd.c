@@ -350,7 +350,7 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 			goto cleanup;
 		}
 		
-		printk("[mitosis] __pgtable_repl_alloc_one origin pagep=%lx and new pagep = %lx\n",(long) page_to_virt(p),(long)page_to_virt(pgd2->replica));
+		printk("[mitosis] __pgtable_repl_alloc_one origin pagep=%lx and new pagep = %lx\n",(long) page_to_virt(p),(long)page_to_virt(p2->replica));
 		check_page_node(p2->replica, i);
 
 		// if (ctor) {
