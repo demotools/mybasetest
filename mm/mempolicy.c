@@ -1631,7 +1631,7 @@ static long kernel_set_pgtlbreplpolicy(int mode, const unsigned long __user *nma
 	int err;
 	struct mm_struct *mm = current->mm;
 	nodemask_t nodes;
-
+	printk("[mitosis] kernel_set_pgtlbreplpolicy: pid = %d\n",current->pid);
 	if (mode) {
 		err = get_nodes(&nodes, nmask, maxnode);
 		if (err)
