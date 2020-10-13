@@ -657,11 +657,11 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 		check_page_node(page_pud, i);
 
 		pgdp = (pgd_t *)((long)page_to_virt(page_pgd) + offset);
-		printk("PTREP: set_pgd offset=%ld and node0 origin pgd=%ld  and pgd+offset=%lx\n",offset,(long)page_to_virt(page_pgd), (long)pgd_val(pgdp));
+		
 		//参考了pgd_populate 中生成pudp的方法
 		pgdval = __pgd(__phys_to_pgd_val(page_to_phys(page_pud)) | PUD_TYPE_TABLE);
 		// pgdval = native_make_pgd((page_to_pfn(page_pud) << PAGE_SHIFT) | pgd_flags(pgdval));
-		printk("PTREP: set_pgd final pgdp = %lx  and  pdgval=%lx\n",(long)pgdp, (long)pgd_val(pgdval));
+		printk("PTREP: set_pgd offset=%lx and node0 origin pgd=%lx  and pgd+offset=%lx  and pdgval=%lx\n",offset,(long)page_to_virt(page_pgd), (long)pgdp, (long)pgd_val(pgdval));
 		native_set_pgd(pgdp, pgdval);
 	}
 	printk("PTREP: Called pgtable_repl_set_pgd  done \n");
