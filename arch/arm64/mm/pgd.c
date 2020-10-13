@@ -966,7 +966,7 @@ int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __u
 		} else if (state == 0) {
 			/* fixed on node 0 */
 			printk("Page table allocation set to fixed on node 0\n");
-			pgtable_repl_custom_activated = ture;
+			pgtable_repl_custom_activated = true;
 			pgtable_repl_activated = false;
 			pgtable_fixed_node = 0;
 			pgtable_fixed_nodemask = NODE_MASK_NONE;
@@ -974,7 +974,7 @@ int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __u
 		} else {
 			/* replication enabled */
 			printk("Page table allocation set to replicated\n");
-			pgtable_repl_custom_activated = ture;
+			pgtable_repl_custom_activated = true;
 			pgtable_repl_activated = true;
 			pgtable_fixed_node = 0;
 			pgtable_fixed_nodemask = NODE_MASK_NONE;

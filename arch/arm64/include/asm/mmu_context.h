@@ -181,7 +181,7 @@ void check_and_switch_context(struct mm_struct *mm, unsigned int cpu);
 
 #ifdef CONFIG_ARM64_SW_TTBR0_PAN
 #ifdef CONFIG_PGTABLE_REPLICATION
-extern bool pgtable_repl_initialized;
+// extern bool pgtable_repl_initialized;
 static inline void update_saved_ttbr0(struct task_struct *tsk,
 				      struct mm_struct *mm)
 {
@@ -196,7 +196,8 @@ static inline void update_saved_ttbr0(struct task_struct *tsk,
 	}	
 	else
 	{
-		if (pgtable_repl_initialized && mm->repl_pgd_enabled)
+		// if (pgtable_repl_initialized && mm->repl_pgd_enabled)
+		if (mm->repl_pgd_enabled)
 		{
 			printk("[mitosis] update_saved_ttbr0 mm->pgd=%lx.\n",(long)mm->pgd);
 			
