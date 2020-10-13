@@ -1640,6 +1640,7 @@ static long kernel_set_pgtlbreplpolicy(int mode, const unsigned long __user *nma
 		if (mm->repl_pgd_enabled) {
 			/* we cannot change the replication policy at runtime to include more or less nodes */
 			if (!nodes_equal(mm->repl_pgd_nodes, nodes)) {
+				printk("[mitosis] NOTE: we cannot change the replication policy at runtime...\n");
 				return -EINVAL;
 			}
 

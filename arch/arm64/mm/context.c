@@ -279,7 +279,7 @@ void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
 	{
 		pgd = mm_get_pgd_for_node(mm);
 		pgd_phys = virt_to_phys(pgd);
-		printk("%s:%u mm=%lx, pgd=%lx, pgd_phys=%lx\n", __FUNCTION__, __LINE__, (long)mm, (long)pgd,(long)pgd_phys);
+		printk("%s:%u cpu_do_switch_mm mm=%lx, pgd=%lx, pgd_phys=%lx\n", __FUNCTION__, __LINE__, (long)mm, (long)pgd,(long)pgd_phys);
 	}
 	#endif
 	ttbr0 = phys_to_ttbr(pgd_phys);

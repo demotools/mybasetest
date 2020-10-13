@@ -94,12 +94,16 @@ void pgtable_cache_free(int node, struct page *p);
 struct page *pgtable_cache_alloc(int node);
 
 ///> pgtable_repl_initialized tracks whether the system is ready for handling page table replication
-// static bool pgtable_repl_initialized = false;
-bool pgtable_repl_initialized = false;
+static bool pgtable_repl_initialized = false;
+// bool pgtable_repl_initialized = false;
 
 ///> tracks whether page table replication is activated for new processes by default
-// static bool pgtable_repl_activated = false;
-bool pgtable_repl_activated = false;
+//这个是控制以后创建的其他进程的页表复制功能开启的
+static bool pgtable_repl_activated = false;
+// bool pgtable_repl_activated = false;
+
+//手动激活控制
+static bool pgtable_repl_custom_activated = false;
 
 ///> where to allocate the page tables from
 int pgtable_fixed_node = -1;
@@ -187,7 +191,7 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 	
 	
 	if (unlikely(!pgtable_repl_initialized)) {
-		if (!pgtable_repl_activated) {
+		if (!pgtable_repl_custom_activated) {
 		return 0;
 		}
 		pgtable_repl_initialized = (nr_node_ids != MAX_NUMNODES);
@@ -823,6 +827,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 	/* check if the subsystem is initialized. this should actually be the case */
 	if (unlikely(!pgtable_repl_initialized)) {
 		panic("PTREPL: %s:%u - subsystem should be enabled by now! \n", __FUNCTION__, __LINE__);
+		printk("PTREP: pgtable_repl_initialized = no\n");
 	}
 
 	/* if it already has been enbaled, don't do anything */
@@ -961,7 +966,7 @@ int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __u
 		} else if (state == 0) {
 			/* fixed on node 0 */
 			printk("Page table allocation set to fixed on node 0\n");
-			pgtable_repl_initialized = true;
+			pgtable_repl_custom_activated = ture;
 			pgtable_repl_activated = false;
 			pgtable_fixed_node = 0;
 			pgtable_fixed_nodemask = NODE_MASK_NONE;
@@ -969,7 +974,7 @@ int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __u
 		} else {
 			/* replication enabled */
 			printk("Page table allocation set to replicated\n");
-			pgtable_repl_initialized = true;
+			pgtable_repl_custom_activated = ture;
 			pgtable_repl_activated = true;
 			pgtable_fixed_node = 0;
 			pgtable_fixed_nodemask = NODE_MASK_NONE;
