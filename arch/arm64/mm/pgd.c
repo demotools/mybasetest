@@ -628,7 +628,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 
 	page_pgd = page_of_ptable_entry(pgdp);
 	check_page(page_pgd);
-
+	//这里是判断这个进程有没有被允许开启页表复制，因为没有mm,所以只能用页表的链表是否为空来判断
 	if (page_pgd->replica == NULL) {
 		return;
 	}
@@ -824,7 +824,9 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 	pmd_t *pmd;
 	pte_t *pte;
 	size_t pgd_idx, pud_idx, pmd_idx, pte_idx;
-
+	int pud_num = 0;
+	int pmd_num = 0;
+	int pte_num = 0;
 
 	/* check if the subsystem is initialized. this should actually be the case */
 	if (unlikely(!pgtable_repl_initialized)) {
@@ -846,9 +848,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 	mm->repl_pgd_nodes = nodes;
 	mm->repl_pgd_enabled = true;
 
-	int pud_num = 0;
-	int pmd_num = 0;
-	int pte_num = 0;
+	printk("[mitosis] mm->pid=%d.\n",(long)mm->pid);
 	printk("[mitosis] pgtbl_repl_prepare_replication  for mm=%lx.\n",(long)mm);
 	/* this will replicate the pgd */
 	pgtable_repl_pgd_alloc(mm);

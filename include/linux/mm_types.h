@@ -407,9 +407,11 @@ struct mm_struct {
 		pgd_t *    repl_pgd[8];
 		bool       repl_pgd_enabled;
 		nodemask_t repl_pgd_nodes;
+		int pid;
 		#endif
 
 		pgd_t * pgd;
+		
 
 #ifdef CONFIG_MEMBARRIER
 		/**
