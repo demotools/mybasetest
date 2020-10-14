@@ -520,7 +520,7 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 		check_page_node(page_pte, i);
 
 		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
-		printk("PTREP: set_pte offset=%lx and node0 origin pte=%lx  and pte+offset=%lx  and now pte=%lx and pteval=%lx\n",offset,(long)page_to_virt(page_pte), (long)ptep,(long)pte_val(pteval));
+		printk("PTREP: set_pte offset=%lx and node0 origin pte=%lx  and pte+offset=%lx  and pteval=%lx\n",offset,(long)page_to_virt(page_pte), (long)ptep,(long)pte_val(pteval));
 		native_set_pte(ptep, pteval);
 	}
 	printk("------PTREPL: set_pte done------\n");
@@ -585,7 +585,7 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 		pmdp = (pmd_t *)((long)page_to_virt(page_pmd) + offset);
 		pmdval = __pmd(__phys_to_pmd_val(page_to_phys(page_pte)) | PMD_TYPE_TABLE);
 		// pmdval = native_make_pmd((page_to_pfn(page_pte) << PAGE_SHIFT) | pmd_flags(pmdval));
-		printk("PTREP: set_pmd offset=%lx and node0 origin pmd=%lx  and pmd+offset=%lx  and pmd=%lx and pmdval=%lx\n",offset,(long)page_to_virt(page_pmd), (long)pmdp, (long)page_to_virt(page_pte),(long)pmd_val(pmdval));
+		printk("PTREP: set_pmd offset=%lx and node0 origin pmd=%lx  and pmd+offset=%lx  and pte=%lx and pmdval=%lx\n",offset,(long)page_to_virt(page_pmd), (long)pmdp, (long)page_to_virt(page_pte),(long)pmd_val(pmdval));
 		native_set_pmd(pmdp, pmdval);
 	}
 	printk("------PTREPL: set_pmd done------\n");
@@ -641,7 +641,7 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 		pudp = (pud_t *)((long)page_to_virt(page_pud) + offset);
 		pudval = __pud(__phys_to_pud_val(page_to_phys(page_pmd)) | PMD_TYPE_TABLE);
 		// pudval = native_make_pud((page_to_pfn(page_pmd) << PAGE_SHIFT) | pud_flags(pudval));
-		printk("PTREP: set_pud offset=%lx and node0 origin pud=%lx  and pud+offset=%lx  and pud=%lx and pudval=%lx\n",offset,(long)page_to_virt(page_pud), (long)pudp, (long)page_to_virt(page_pmd),(long)pud_val(pudval));
+		printk("PTREP: set_pud offset=%lx and node0 origin pud=%lx  and pud+offset=%lx  and pmd=%lx and pudval=%lx\n",offset,(long)page_to_virt(page_pud), (long)pudp, (long)page_to_virt(page_pmd),(long)pud_val(pudval));
 		native_set_pud(pudp, pudval);
 	}
 	printk("------PTREPL: set_pud done------\n");
@@ -657,13 +657,14 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
 	}
-	printk("------PTREPL: set_pgd start------\n");
+	
 	page_pgd = page_of_ptable_entry(pgdp);
 	check_page(page_pgd);
 	//这里是判断这个进程有没有被允许开启页表复制，因为没有mm,所以只能用页表的链表是否为空来判断
 	if (page_pgd->replica == NULL) {
 		return;
 	}
+	printk("------PTREPL: set_pgd start------\n");
 	//取出pgdp 在pgd 中的偏移 offset
 	offset = ((long)pgdp & ~PAGE_MASK);
 	check_offset(offset);
@@ -931,10 +932,12 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 				// 	set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
 				// 	continue;
 				// }
-
+				printk("PTREP: pmd_idx = %ld，and pmd=%lx  and pmd[%ld]=%lx\n",pmd_idx,(long)(pmd + pmd_idx),pmd_idx, (long)pmd_val(pmd[pmd_idx]));
 				/* get the pte page */
 				//  pte = (pte_t *)pmd_page_vaddr(pmd[pmd_idx]);
 				pte = (pte_t *)page_to_virt(pmd_page(pmd[pmd_idx]));
+				printk("%s:%u pmd[%ld]'s pte=%lx..%lx\n", __FUNCTION__, __LINE__, pmd_idx,(long)pte, (long)pte + 4095);
+				printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pte)), (long)virt_to_pfn(pte));
 
 				pgtable_repl_alloc_pte(mm, page_to_pfn(page_of_ptable_entry(pte)));
 				pgtable_repl_set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
@@ -945,6 +948,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 						continue;
 					}
 					pte_num++;
+					printk("PTREP: pte_idx = %ld，and pte=%lx  and pte[%ld]=%lx\n",pte_idx,(long)(pte + pte_idx),pte_idx, (long)pte_val(pte[pte_idx]));
 					// set_pte(pte + pte_idx, pte[pte_idx]);
 					pgtable_repl_set_pte(pte + pte_idx, pte[pte_idx]);
 				}
