@@ -566,7 +566,7 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 		pmdp = (pmd_t *)((long)page_to_virt(page_pmd) + offset);
 		pmdval = __pmd(__phys_to_pmd_val(page_to_phys(page_pte)) | PMD_TYPE_TABLE);
 		// pmdval = native_make_pmd((page_to_pfn(page_pte) << PAGE_SHIFT) | pmd_flags(pmdval));
-		printk("PTREP: set_pmd offset=%lx and node0 origin pmd=%lx  and pmd+offset=%lx  and pmd=%lx and pmdval=%lx\n",offset,(long)page_to_virt(page_pmd), (long)pmdp, (long)page_to_virt(page_pte),(long)pgd_val(pmdval));
+		printk("PTREP: set_pmd offset=%lx and node0 origin pmd=%lx  and pmd+offset=%lx  and pmd=%lx and pmdval=%lx\n",offset,(long)page_to_virt(page_pmd), (long)pmdp, (long)page_to_virt(page_pte),(long)pmd_val(pmdval));
 		native_set_pmd(pmdp, pmdval);
 	}
 	printk("------PTREPL: set_pmd done------\n");
@@ -622,7 +622,7 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 		pudp = (pud_t *)((long)page_to_virt(page_pud) + offset);
 		pudval = __pud(__phys_to_pud_val(page_to_phys(page_pmd)) | PMD_TYPE_TABLE);
 		// pudval = native_make_pud((page_to_pfn(page_pmd) << PAGE_SHIFT) | pud_flags(pudval));
-		printk("PTREP: set_pud offset=%lx and node0 origin pud=%lx  and pud+offset=%lx  and pud=%lx and pudval=%lx\n",offset,(long)page_to_virt(page_pud), (long)pudp, (long)page_to_virt(page_pmd),(long)pgd_val(pudval));
+		printk("PTREP: set_pud offset=%lx and node0 origin pud=%lx  and pud+offset=%lx  and pud=%lx and pudval=%lx\n",offset,(long)page_to_virt(page_pud), (long)pudp, (long)page_to_virt(page_pmd),(long)pud_val(pudval));
 		native_set_pud(pudp, pudval);
 	}
 	printk("------PTREPL: set_pud done------\n");
