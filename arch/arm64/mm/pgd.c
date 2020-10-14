@@ -948,6 +948,11 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 						continue;
 					}
 					pte_num++;
+					if (pte_num>10)
+					{
+						break;
+					}
+					
 					printk("PTREP: pte_idx = %ld，and pte=%lx  and pte[%ld]=%lx\n",pte_idx,(long)(pte + pte_idx),pte_idx, (long)pte_val(pte[pte_idx]));
 					// set_pte(pte + pte_idx, pte[pte_idx]);
 					pgtable_repl_set_pte(pte + pte_idx, pte[pte_idx]);
