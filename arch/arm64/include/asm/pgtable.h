@@ -43,7 +43,7 @@ static inline void native_set_pte(pte_t *ptep, pte_t pte);
 static inline void native_set_pmd(pmd_t *pmdp, pmd_t pmd);
 static inline void native_set_pud(pud_t *pudp, pud_t pud);
 
-// struct page *page_of_ptable_entry(void *pgtableep);
+struct page *page_of_ptable_entry(void *pgtableep);
 
 void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval);
 void pgtable_repl_set_pte_at(struct mm_struct *mm, unsigned long addr,

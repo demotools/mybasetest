@@ -215,10 +215,9 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 	if (mm->repl_pgd_enabled == false ) {
 		return 0;
 	}
-	printk("PTREPL: pgtable_repl_pgd_alloc. set initial mm->repl_pgd[%d]\n",i);
-	printk("PTREPL: enable replication for the pgd of process\n");
+	printk("------PTREPL: alloc pgd start------\n");
 	printk("[mitosis] nr_node_ids=%d.\n",nr_node_ids);
-	printk("[mitosis] pgd_alloc origin mm->pgd=%lx.\n",(long)mm->pgd);
+	printk("[mitosis] pgd_alloc origin mm->pgd =%lx.\n",(long)mm->pgd);
 	// replication is enabled for this domain
 	mm->repl_pgd_enabled = true;
 
@@ -256,7 +255,7 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 		panic("%s:%d: PTREPL: NOT THE ASAME????\n", __FUNCTION__, __LINE__);
 	}
 	#endif
-	printk("PTREPL: alloc pgd success\n");
+	printk("------PTREPL: alloc pgd success------\n");
 	return 0;
 	cleanup:
 
@@ -274,9 +273,9 @@ void pgtable_repl_pgd_free(struct mm_struct *mm, pgd_t *pgd)
 		return;
 	}
 
-	if (unlikely(!pgtable_repl_initialized)) {
-		return;
-	}
+	// if (unlikely(!pgtable_repl_initialized)) {
+	// 	return;
+	// }
 
 	pgd_page = page_of_ptable_entry(mm->pgd);
 	if (pgd_page->replica == NULL) {
@@ -285,6 +284,7 @@ void pgtable_repl_pgd_free(struct mm_struct *mm, pgd_t *pgd)
 		}
 		return;
 	}
+	printk("------PTREPL: free pgd start------\n");
 	printk("[mitosis] pgtable_repl_pgd_free mm->pgd=%lx.\n",(long)mm->pgd);
 	pgd_page = pgd_page->replica;
 
@@ -307,6 +307,7 @@ void pgtable_repl_pgd_free(struct mm_struct *mm, pgd_t *pgd)
 	}
 	pgd_page = page_of_ptable_entry(mm->pgd);
 	pgd_page->replica = NULL;
+	printk("------PTREPL: free pgd done------\n");
 }
 
 static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long pfn)
@@ -370,7 +371,7 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 	#if 1
 	p2 = p->replica;
 	for (i = 0; i < nr_node_ids; i++) {
-		printk("page: %lx", (long)p2);
+		//printk("page: %lx", (long)p2);
 		check_page_node(p2, i);
 		p2 = p2->replica;
 	}
@@ -426,35 +427,44 @@ static inline void __pgtable_repl_release_one(unsigned long pfn)
 
 void pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long pfn)
 {
-	// printk("PTREP: Called pgtable_repl_alloc_pte\n");
+	printk("------PTREPL: alloc pte start------\n");
 	__pgtable_repl_alloc_one(mm, pfn);
+	printk("------PTREPL: alloc pte done------\n");
 }
 
 void pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long pfn)
 {
-	// printk("PTREP: Called pgtable_repl_alloc_pmd\n");
+	printk("------PTREPL: alloc pmd start------\n");
 	__pgtable_repl_alloc_one(mm, pfn);
+	printk("------PTREPL: alloc pmd done------\n");
 }
 
 void pgtable_repl_alloc_pud(struct mm_struct *mm, unsigned long pfn)
 {
-	// printk("PTREP: Called pgtable_repl_alloc_pud\n");
+	printk("------PTREPL: alloc pud start------\n");
 	__pgtable_repl_alloc_one(mm, pfn);
+	printk("------PTREPL: alloc pud done------\n");
 }
 
 void pgtable_repl_release_pte(unsigned long pfn)
 {
+	printk("------PTREPL: release pte start------\n");
 	__pgtable_repl_release_one(pfn);
+	printk("------PTREPL: release pte done------\n");
 }
 
 void pgtable_repl_release_pmd(unsigned long pfn)
 {
+	printk("------PTREPL: release pmd start------\n");
 	__pgtable_repl_release_one(pfn);
+	printk("------PTREPL: release pmd done------\n");
 }
 
 void pgtable_repl_release_pud(unsigned long pfn)
 {
+	printk("------PTREPL: release pud start------\n");
 	__pgtable_repl_release_one(pfn);
+	printk("------PTREPL: release pud done------\n");
 }
 
 /*
@@ -474,6 +484,7 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
 	}
+	printk("------PTREPL: set_pte start------\n");
 	//因为ptep 是 pte表中的一个entry的地址，我们为了获取这个entry 对于这个pte表的offset，所以需要获取这个表的page，然后通过page得到这个page的虚拟地址， 然后就能用ptep和这个虚拟地址计算offset
 	page_pte = page_of_ptable_entry(ptep);
 	check_page(page_pte);
@@ -481,7 +492,7 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	if (page_pte->replica == NULL) {
 		return;
 	}
-
+	
 	offset = (long)ptep - (long)page_to_virt(page_pte);
 	check_offset(offset);
 
@@ -490,9 +501,10 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 		check_page_node(page_pte, i);
 
 		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+		printk("PTREP: set_pte offset=%lx and node0 origin pte=%lx  and pte+offset=%lx  and now pte=%lx and pteval=%lx\n",offset,(long)page_to_virt(page_pte), (long)ptep,(long)pte_val(pteval));
 		native_set_pte(ptep, pteval);
 	}
-	// printk("PTREP: Called pgtable_repl_set_pte  done\n");
+	printk("------PTREPL: set_pte done------\n");
 }
 
 
@@ -502,10 +514,10 @@ void pgtable_repl_set_pte_at(struct mm_struct *mm, unsigned long addr,
 	pgtable_repl_set_pte(ptep, pteval);
 }
 
-static inline pmd_t native_make_pmd(pmdval_t val)
-{
-	return (pmd_t) { val };
-}
+// static inline pmd_t native_make_pmd(pmdval_t val)
+// {
+// 	return (pmd_t) { val };
+// }
 
 void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 {
@@ -517,7 +529,7 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
 	}
-
+	printk("------PTREPL: set_pmd start------\n");
 	page_pmd = page_of_ptable_entry(pmdp);
 	check_page(page_pmd);
 
@@ -532,6 +544,8 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 
 	/* the entry is a large entry i.e. pointing to a frame, or the entry is not valid */
 	if (!page_pte || pmd_none(pmdval) || !pmd_present(pmdval)) {
+		printk("PTREP: set_pmd  origin pmd=%lx  and pmdval=%lx\n",(long)pmdp, (long)pmd_val(pmdval));
+		printk("PTREP: Called pgtable_repl_set_pmd  !page_te \n");
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pmd = page_pmd->replica;
 			check_page_node(page_pmd, i);
@@ -552,9 +566,10 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 		pmdp = (pmd_t *)((long)page_to_virt(page_pmd) + offset);
 		pmdval = __pmd(__phys_to_pmd_val(page_to_phys(page_pte)) | PMD_TYPE_TABLE);
 		// pmdval = native_make_pmd((page_to_pfn(page_pte) << PAGE_SHIFT) | pmd_flags(pmdval));
+		printk("PTREP: set_pmd offset=%lx and node0 origin pmd=%lx  and pmd+offset=%lx  and pmd=%lx and pmdval=%lx\n",offset,(long)page_to_virt(page_pmd), (long)pmdp, (long)page_to_virt(page_pte),(long)pgd_val(pmdval));
 		native_set_pmd(pmdp, pmdval);
 	}
-	// printk("PTREP: Called pgtable_repl_set_pmd  done\n");
+	printk("------PTREPL: set_pmd done------\n");
 }
 
 // static inline pud_t native_make_pud(pmdval_t val)
@@ -571,7 +586,7 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
 	}
-
+	printk("------PTREPL: set_pud start------\n");
 	page_pud = page_of_ptable_entry(pudp);
 	check_page(page_pud);
 
@@ -586,6 +601,8 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 
 	/* there is no age for this entry or the entry is huge or the entry is not present */
 	if (!page_pmd || !pud_present(pudval) || pud_none(pudval)) {
+		printk("PTREP: set_pud  origin pud=%lx  and pudval=%lx\n",(long)pudp, (long)pud_val(pudval));
+		printk("PTREP: Called pgtable_repl_set_pud  !page_pmd \n");
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pud = page_pud->replica;
 			check_page_node(page_pud, i);
@@ -605,9 +622,10 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 		pudp = (pud_t *)((long)page_to_virt(page_pud) + offset);
 		pudval = __pud(__phys_to_pud_val(page_to_phys(page_pmd)) | PMD_TYPE_TABLE);
 		// pudval = native_make_pud((page_to_pfn(page_pmd) << PAGE_SHIFT) | pud_flags(pudval));
+		printk("PTREP: set_pud offset=%lx and node0 origin pud=%lx  and pud+offset=%lx  and pud=%lx and pudval=%lx\n",offset,(long)page_to_virt(page_pud), (long)pudp, (long)page_to_virt(page_pmd),(long)pgd_val(pudval));
 		native_set_pud(pudp, pudval);
 	}
-	// printk("PTREP: Called pgtable_repl_set_pud  done\n");
+	printk("------PTREPL: set_pud done------\n");
 }
 
 void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
@@ -620,7 +638,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
 	}
-
+	printk("------PTREPL: set_pgd start------\n");
 	page_pgd = page_of_ptable_entry(pgdp);
 	check_page(page_pgd);
 	//这里是判断这个进程有没有被允许开启页表复制，因为没有mm,所以只能用页表的链表是否为空来判断
@@ -634,7 +652,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	page_pud = pgd_page(pgdval);
 	//如果pud 的page 还没有被放入内存中，那么就直接把pgdval这个地址值设置到各节点的副本pgd表中。
 	if (!page_pud || pgd_none(pgdval) || !pgd_present(pgdval)) {
-		printk("PTREP: set_pgd  origin pgd=%lx  and pdgval=%lx\n",(long)pgdp, (long)pgd_val(pgdval));
+		printk("PTREP: set_pgd  origin pgd=%lx  and pgdval=%lx\n",(long)pgdp, (long)pgd_val(pgdval));
 		printk("PTREP: Called pgtable_repl_set_pgd  !page_pud \n");
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pgd = page_pgd->replica;
@@ -660,7 +678,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 		printk("PTREP: set_pgd offset=%lx and node0 origin pgd=%lx  and pgd+offset=%lx  and pud=%lx and pdgval=%lx\n",offset,(long)page_to_virt(page_pgd), (long)pgdp, (long)page_to_virt(page_pud),(long)pgd_val(pgdval));
 		native_set_pgd(pgdp, pgdval);
 	}
-	printk("PTREP: Called pgtable_repl_set_pgd  done \n");
+	printk("------PTREPL: set_pgd done------\n");
 }
 
 /*
@@ -852,11 +870,10 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		if (pgd_none(pgd[pgd_idx])) {
 			continue;
 		}
-		printk("PTREP: pgd_idx = %ld，and pgd=%lx\n",pgd_idx,(long)(pgd + pgd_idx));
-		printk("PTREP: pgd[%ld]=%lx\n",pgd_idx, (long)pgd_val(pgd[pgd_idx]));
+		printk("PTREP: pgd_idx = %ld，and pgd=%lx  and pgd[%ld]=%lx\n",pgd_idx,(long)(pgd + pgd_idx),pgd_idx, (long)pgd_val(pgd[pgd_idx]));
 		// pud = (pud_t *)pgd_page_vaddr(pgd[pgd_idx]);  //origin
 		pud = (pud_t *)page_to_virt(pgd_page(pgd[pgd_idx])); //first version
-		printk("%s:%u first version pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pud, (long)pud + 4095);
+		printk("%s:%u pgd[%ld]'s pud=%lx..%lx\n", __FUNCTION__, __LINE__, pgd_idx,(long)pud, (long)pud + 4095);
 		
 		// pud = (pud_t *)__va(pgd_val(pgd[pgd_idx]));
 		//这个换算方法结果时错误的，有偏移// printk("%s:%u __va pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)(pud_t *)__va(pgd_val(pgd[pgd_idx])), (long)(pud_t *)__va(pgd_val(pgd[pgd_idx])) + 4095);
@@ -865,7 +882,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		//	printk("%s:%u set_p4d(p4d[%zu], 0x%lx, 0x%lx\n",__FUNCTION__, __LINE__,  p4d_idx, _PAGE_TABLE | __pa(pud_new), p4d_val(__p4d(_PAGE_TABLE | __pa(pud_new))));
 		pgtable_repl_set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
 		// set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
-
+		printk("[mitosis] start search pud .......\n");
 		for (pud_idx = 0; pud_idx < 512; pud_idx++) {
 			if (pud_none(pud[pud_idx])) {
 				continue;
@@ -875,11 +892,12 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 			// 	set_pud(pud + pud_idx, pud[pud_idx]);
 			// 	continue;
 			// }
-
+			printk("PTREP: pud_idx = %ld，and pud=%lx  and pud[%ld]=%lx\n",pud_idx,(long)(pud + pud_idx),pud_idx, (long)pud_val(pud[pud_idx]));
 			//  pmd =  (pmd_t *)pud_page_vaddr(pud[pud_idx]);
 			//pmd =  (pmd_t *)page_to_virt(pud_page(pud[pud_idx]));
 			pmd =  (pmd_t *)page_to_virt(pud_page(pud[pud_idx]));
-			 
+			printk("%s:%u pud[%ld]'s pmd=%lx..%lx\n", __FUNCTION__, __LINE__, pud_idx,(long)pmd, (long)pmd + 4095);
+			printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pmd)), (long)virt_to_pfn(pmd));
 			pgtable_repl_alloc_pmd(mm, page_to_pfn(page_of_ptable_entry(pmd)));
 			// set_pud(pud + pud_idx,pud[pud_idx]);
 			pgtable_repl_set_pud(pud + pud_idx,pud[pud_idx]);
@@ -925,7 +943,12 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 	}
 	
 	// cpu_do_switch_mm(mm->pgd,mm);
-	cpu_switch_mm(mm->pgd,mm);
+	cpu_set_reserved_ttbr0();
+	local_flush_tlb_all();
+	cpu_set_default_tcr_t0sz();
+
+	if (mm != &init_mm && !system_uses_ttbr0_pan())
+		cpu_switch_mm(mm->pgd, mm);
 	// pgtable_repl_write_cr3(__native_read_cr3());
 	printk("PTREP: Called pgtbl_repl_prepare_replication  done\n");
 	return err;
