@@ -427,6 +427,9 @@ static inline void __pgtable_repl_release_one(unsigned long pfn)
 
 void pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long pfn)
 {
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
 	printk("------PTREPL: alloc pte start------\n");
 	__pgtable_repl_alloc_one(mm, pfn);
 	printk("------PTREPL: alloc pte done------\n");
@@ -434,6 +437,9 @@ void pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long pfn)
 
 void pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long pfn)
 {
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
 	printk("------PTREPL: alloc pmd start------\n");
 	__pgtable_repl_alloc_one(mm, pfn);
 	printk("------PTREPL: alloc pmd done------\n");
@@ -441,6 +447,9 @@ void pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long pfn)
 
 void pgtable_repl_alloc_pud(struct mm_struct *mm, unsigned long pfn)
 {
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
 	printk("------PTREPL: alloc pud start------\n");
 	__pgtable_repl_alloc_one(mm, pfn);
 	printk("------PTREPL: alloc pud done------\n");
@@ -448,6 +457,9 @@ void pgtable_repl_alloc_pud(struct mm_struct *mm, unsigned long pfn)
 
 void pgtable_repl_release_pte(unsigned long pfn)
 {
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
 	printk("------PTREPL: release pte start------\n");
 	__pgtable_repl_release_one(pfn);
 	printk("------PTREPL: release pte done------\n");
@@ -455,6 +467,9 @@ void pgtable_repl_release_pte(unsigned long pfn)
 
 void pgtable_repl_release_pmd(unsigned long pfn)
 {
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
 	printk("------PTREPL: release pmd start------\n");
 	__pgtable_repl_release_one(pfn);
 	printk("------PTREPL: release pmd done------\n");
@@ -462,6 +477,9 @@ void pgtable_repl_release_pmd(unsigned long pfn)
 
 void pgtable_repl_release_pud(unsigned long pfn)
 {
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
 	printk("------PTREPL: release pud start------\n");
 	__pgtable_repl_release_one(pfn);
 	printk("------PTREPL: release pud done------\n");
