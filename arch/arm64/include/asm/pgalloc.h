@@ -125,16 +125,7 @@ static inline void
 pmd_populate(struct mm_struct *mm, pmd_t *pmdp, pgtable_t ptep)
 {
 	#ifdef CONFIG_PGTABLE_REPLICATION
-	
-	unsigned long pfn2 = page_to_pfn(pmd_page(__pmd(__phys_to_pmd_val(page_to_phys(ptep)) | PMD_TYPE_TABLE)));
-	
-	unsigned long pfn = virt_to_pfn(page_to_virt(ptep));
-	if (pfn == pfn2)
-	{
-		panic("%s:%d: PTREPL: pfn != pfn2 FAILED!!!!\n", __FUNCTION__, __LINE__);
-	}
-	
-	pgtable_repl_alloc_pte(mm, pfn);
+	pgtable_repl_alloc_pte(mm, virt_to_pfn(page_to_virt(ptep)));
 	#endif
 	__pmd_populate(pmdp, page_to_phys(ptep), PMD_TYPE_TABLE);
 }

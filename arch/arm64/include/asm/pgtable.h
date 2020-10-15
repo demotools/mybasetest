@@ -247,7 +247,7 @@ static inline void set_pte(pte_t *ptep, pte_t pte)
 {
 	WRITE_ONCE(*ptep, pte);
 	//pgtrepl
-	// pgtable_repl_set_pte(ptep, pte);
+	pgtable_repl_set_pte(ptep, pte);
 	/*
 	 * Only if the new pte is valid and kernel, otherwise TLB maintenance
 	 * or update_mmu_cache() have the necessary barriers.
@@ -543,7 +543,7 @@ static inline void set_pmd(pmd_t *pmdp, pmd_t pmd)
 
 	WRITE_ONCE(*pmdp, pmd);
 	//pgtrepl
-	// pgtable_repl_set_pmd(pmdp, pmd);
+	pgtable_repl_set_pmd(pmdp, pmd);
 	if (pmd_valid(pmd)) {
 		dsb(ishst);
 		isb();
@@ -642,7 +642,7 @@ static inline void set_pud(pud_t *pudp, pud_t pud)
 
 	WRITE_ONCE(*pudp, pud);
 	//pgtrepl
-	// pgtable_repl_set_pud(pudp, pud);
+	pgtable_repl_set_pud(pudp, pud);
 	if (pud_valid(pud)) {
 		dsb(ishst);
 		isb();

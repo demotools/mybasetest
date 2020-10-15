@@ -342,11 +342,12 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 		}
 		return;
 	}
-
+	p->replica_node_id = -1;
 	p2 = p;
 	for (i = 0; i < nr_node_ids; i++) {
 		/* allocte a new page, and place it in the replica list */
 		p2->replica  = pgtable_cache_alloc(i);
+		p2->replica_node_id = i;
 		if (p2->replica == NULL) {
 			goto cleanup;
 		}
@@ -634,7 +635,7 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 	// printk("PTREP: Called pgtable_repl_set_pud\n");
 	int i;
 	long offset;
-	struct page *page_pud, *page_pmd;
+	struct page *page_pud, *page_pmd ,*page_tmp;
 
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
@@ -665,6 +666,14 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 		return;
 	}
 
+	// if(page_pud->replica_node_id != -1)
+	// {
+	// 	for (i = 0; i < (nr_node_ids-page_pud->replica_node_id); i++)
+	// 	{
+	// 		page_tmp = page_pmd->replica;
+	// 	}
+	// }
+	// page_pmd = page_tmp;
 	for (i = 0; i < nr_node_ids; i++) {
 		page_pud = page_pud->replica;
 		page_pmd = page_pmd->replica;

@@ -220,6 +220,7 @@ struct page {
 
 #ifdef CONFIG_PGTABLE_REPLICATION
 	struct page *replica;
+	int replica_node_id;
 #endif
 
 #ifdef LAST_CPUPID_NOT_IN_PAGE_FLAGS
