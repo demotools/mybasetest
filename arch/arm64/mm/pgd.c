@@ -510,6 +510,40 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	if (page_pte->replica == NULL) {
 		return;
 	}
+	// printk("------PTREPL: set_pte start------\n");
+	
+	offset = (long)ptep - (long)page_to_virt(page_pte);
+	check_offset(offset);
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page_pte = page_pte->replica;
+		check_page_node(page_pte, i);
+
+		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+		// printk("PTREP: set_pte offset=%lx and node0 origin pte=%lx  and pte+offset=%lx  and pteval=%lx\n",offset,(long)page_to_virt(page_pte), (long)ptep,(long)pte_val(pteval));
+		native_set_pte(ptep, pteval);
+	}
+	// printk("------PTREPL: set_pte done------\n");
+}
+
+void pgtable_repl_set_pte_with_log(pte_t *ptep, pte_t pteval)
+{
+	// printk("PTREP: Called pgtable_repl_set_pte\n");
+	int i;
+	long offset;
+	struct page *page_pte;
+
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
+	
+	//因为ptep 是 pte表中的一个entry的地址，我们为了获取这个entry 对于这个pte表的offset，所以需要获取这个表的page，然后通过page得到这个page的虚拟地址， 然后就能用ptep和这个虚拟地址计算offset
+	page_pte = page_of_ptable_entry(ptep);
+	check_page(page_pte);
+
+	if (page_pte->replica == NULL) {
+		return;
+	}
 	printk("------PTREPL: set_pte start------\n");
 	
 	offset = (long)ptep - (long)page_to_virt(page_pte);
@@ -948,14 +982,16 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 						continue;
 					}
 					pte_num++;
-					if (pte_num>10)
+					if (pte_num<10)
 					{
-						break;
+						printk("PTREP: pte_idx = %ld，and pte=%lx  and pte[%ld]=%lx\n",pte_idx,(long)(pte + pte_idx),pte_idx, (long)pte_val(pte[pte_idx]));
+						pgtable_repl_set_pte_with_log(pte + pte_idx, pte[pte_idx]);
 					}
-					
-					printk("PTREP: pte_idx = %ld，and pte=%lx  and pte[%ld]=%lx\n",pte_idx,(long)(pte + pte_idx),pte_idx, (long)pte_val(pte[pte_idx]));
-					// set_pte(pte + pte_idx, pte[pte_idx]);
-					pgtable_repl_set_pte(pte + pte_idx, pte[pte_idx]);
+					else
+					{
+						pgtable_repl_set_pte(pte + pte_idx, pte[pte_idx]);
+					}
+					// set_pte(pte + pte_idx, pte[pte_idx]);				
 				}
 			}
 		}
