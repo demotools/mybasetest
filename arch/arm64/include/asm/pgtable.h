@@ -738,7 +738,7 @@ static inline void set_pgd(pgd_t *pgdp, pgd_t pgd)
 	}
 
 	WRITE_ONCE(*pgdp, pgd);
-	// pgtable_repl_set_pgd(pgdp, pgd);
+	pgtable_repl_set_pgd(pgdp, pgd);
 	dsb(ishst);
 	isb();
 	//pgtrepl	
