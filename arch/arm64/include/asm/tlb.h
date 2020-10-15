@@ -45,7 +45,7 @@ static inline void __pte_free_tlb(struct mmu_gather *tlb, pgtable_t pte,
 				  unsigned long addr)
 {
 	#ifdef CONFIG_PGTABLE_REPLICATION
-	pgtable_repl_release_pte(virt_to_pfn(page_to_virt(pte)));
+	// pgtable_repl_release_pte(virt_to_pfn(page_to_virt(pte)));
 	#endif
 	pgtable_pte_page_dtor(pte);
 	tlb_remove_table(tlb, pte);
@@ -57,7 +57,7 @@ static inline void __pmd_free_tlb(struct mmu_gather *tlb, pmd_t *pmdp,
 {
 	struct page *page = virt_to_page(pmdp);
 	#ifdef CONFIG_PGTABLE_REPLICATION
-	pgtable_repl_release_pmd(__pa(pmdp) >> PAGE_SHIFT);
+	// pgtable_repl_release_pmd(__pa(pmdp) >> PAGE_SHIFT);
 	#endif
 	pgtable_pmd_page_dtor(page);
 	tlb_remove_table(tlb, page);
@@ -69,7 +69,7 @@ static inline void __pud_free_tlb(struct mmu_gather *tlb, pud_t *pudp,
 				  unsigned long addr)
 {
 	#ifdef CONFIG_PGTABLE_REPLICATION
-	pgtable_repl_release_pud(__pa(pudp) >> PAGE_SHIFT);
+	// pgtable_repl_release_pud(__pa(pudp) >> PAGE_SHIFT);
 	#endif
 	tlb_remove_table(tlb, virt_to_page(pudp));
 }

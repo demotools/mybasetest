@@ -52,7 +52,7 @@ static inline void __pud_populate(pud_t *pudp, phys_addr_t pmdp, pudval_t prot)
 static inline void pud_populate(struct mm_struct *mm, pud_t *pudp, pmd_t *pmdp)
 {
 	#ifdef CONFIG_PGTABLE_REPLICATION
-	pgtable_repl_alloc_pmd(mm, virt_to_pfn(pmdp));
+	// pgtable_repl_alloc_pmd(mm, virt_to_pfn(pmdp));
 	#endif
 	__pud_populate(pudp, __pa(pmdp), PMD_TYPE_TABLE);
 }
@@ -85,7 +85,7 @@ static inline void pgd_populate(struct mm_struct *mm, pgd_t *pgdp, pud_t *pudp)
 {
 	#ifdef CONFIG_PGTABLE_REPLICATION
 	// pgtable_repl_alloc_pud(mm, __pa(pudp) >> PAGE_SHIFT);
-	pgtable_repl_alloc_pud(mm, virt_to_pfn(pudp));
+	// pgtable_repl_alloc_pud(mm, virt_to_pfn(pudp));
 	#endif
 	__pgd_populate(pgdp, __pa(pudp), PUD_TYPE_TABLE);
 }
@@ -125,8 +125,8 @@ static inline void
 pmd_populate(struct mm_struct *mm, pmd_t *pmdp, pgtable_t ptep)
 {
 	#ifdef CONFIG_PGTABLE_REPLICATION
-	unsigned long pfn = virt_to_pfn(page_to_virt(ptep));
-	pgtable_repl_alloc_pte(mm, pfn);
+	// unsigned long pfn = virt_to_pfn(page_to_virt(ptep));
+	// pgtable_repl_alloc_pte(mm, pfn);
 	#endif
 	__pmd_populate(pmdp, page_to_phys(ptep), PMD_TYPE_TABLE);
 }
