@@ -498,7 +498,7 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	// printk("PTREP: Called pgtable_repl_set_pte\n");
 	int i;
 	long offset;
-	struct page *page_pte;
+	struct page *page_pte,*page_tmp;
 
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
@@ -515,6 +515,15 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	
 	offset = (long)ptep - (long)page_to_virt(page_pte);
 	check_offset(offset);
+
+	if(page_pte->replica_node_id != -1)
+	{
+		for (i = 0; i < (nr_node_ids-page_pte->replica_node_id); i++)
+		{
+			page_tmp = page_pte->replica;
+		}
+		page_pte = page_tmp;
+	}
 
 	for (i = 0; i < nr_node_ids; i++) {
 		page_pte = page_pte->replica;
@@ -578,7 +587,7 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 	// printk("PTREP: Called pgtable_repl_set_pmd \n");
 	int i;
 	long offset;
-	struct page *page_pmd, *page_pte;
+	struct page *page_pmd, *page_pte,*page_tmp;
 
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
@@ -607,6 +616,14 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 			native_set_pmd(pmdp, pmdval);
 		}
 		return;
+	}
+	if(page_pmd->replica_node_id != -1)
+	{
+		for (i = 0; i < (nr_node_ids-page_pmd->replica_node_id); i++)
+		{
+			page_tmp = page_pmd->replica;
+		}
+		page_pmd = page_tmp;
 	}
 
 	/* where the entry points to */
@@ -666,14 +683,15 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 		return;
 	}
 
-	// if(page_pud->replica_node_id != -1)
-	// {
-	// 	for (i = 0; i < (nr_node_ids-page_pud->replica_node_id); i++)
-	// 	{
-	// 		page_tmp = page_pmd->replica;
-	// 	}
-	// }
-	// page_pmd = page_tmp;
+	if(page_pud->replica_node_id != -1)
+	{
+		for (i = 0; i < (nr_node_ids-page_pud->replica_node_id); i++)
+		{
+			page_tmp = page_pud->replica;
+		}
+		page_pud = page_tmp;
+	}
+	
 	for (i = 0; i < nr_node_ids; i++) {
 		page_pud = page_pud->replica;
 		page_pmd = page_pmd->replica;
