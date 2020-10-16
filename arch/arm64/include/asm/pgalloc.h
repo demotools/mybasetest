@@ -74,7 +74,7 @@ static inline pud_t *pud_alloc_one(struct mm_struct *mm, unsigned long addr)
 {
 	pud_t * pudp;
 	struct page *page;
-	pudp = (pud_t *)__get_free_page(GFP_PGTABLE_USER)
+	pudp = (pud_t *)__get_free_page(GFP_PGTABLE_USER);
 	#ifdef CONFIG_PGTABLE_REPLICATION
 	page = virt_to_page(pudp);
 	page->replica_node_id = -1;
