@@ -28,6 +28,11 @@ static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long addr)
 		gfp = GFP_PGTABLE_KERNEL;
 
 	page = alloc_page(gfp);
+	
+	#ifdef CONFIG_PGTABLE_REPLICATION
+	page->replica_node_id = -1;
+	pgtable_repl_alloc_pmd(mm, virt_to_pfn(page_to_virt(page)));
+	#endif
 	if (!page)
 		return NULL;
 	if (!pgtable_pmd_page_ctor(page)) {
@@ -51,9 +56,9 @@ static inline void __pud_populate(pud_t *pudp, phys_addr_t pmdp, pudval_t prot)
 
 static inline void pud_populate(struct mm_struct *mm, pud_t *pudp, pmd_t *pmdp)
 {
-	#ifdef CONFIG_PGTABLE_REPLICATION
-	pgtable_repl_alloc_pmd(mm, virt_to_pfn(pmdp));
-	#endif
+	// #ifdef CONFIG_PGTABLE_REPLICATION
+	// pgtable_repl_alloc_pmd(mm, virt_to_pfn(pmdp));
+	// #endif
 	__pud_populate(pudp, __pa(pmdp), PMD_TYPE_TABLE);
 }
 #else
@@ -67,7 +72,16 @@ static inline void __pud_populate(pud_t *pudp, phys_addr_t pmdp, pudval_t prot)
 
 static inline pud_t *pud_alloc_one(struct mm_struct *mm, unsigned long addr)
 {
-	return (pud_t *)__get_free_page(GFP_PGTABLE_USER);
+	pud_t * pudp;
+	struct page *page;
+	pudp = (pud_t *)__get_free_page(GFP_PGTABLE_USER)
+	#ifdef CONFIG_PGTABLE_REPLICATION
+	page = virt_to_page(pudp);
+	page->replica_node_id = -1;
+	pgtable_repl_alloc_pud(mm, virt_to_pfn(pudp));
+	#endif
+	return pudp;
+	// return (pud_t *)__get_free_page(GFP_PGTABLE_USER);
 }
 
 static inline void pud_free(struct mm_struct *mm, pud_t *pudp)
@@ -83,10 +97,9 @@ static inline void __pgd_populate(pgd_t *pgdp, phys_addr_t pudp, pgdval_t prot)
 
 static inline void pgd_populate(struct mm_struct *mm, pgd_t *pgdp, pud_t *pudp)
 {
-	#ifdef CONFIG_PGTABLE_REPLICATION
-	// pgtable_repl_alloc_pud(mm, __pa(pudp) >> PAGE_SHIFT);
-	pgtable_repl_alloc_pud(mm, virt_to_pfn(pudp));
-	#endif
+	// #ifdef CONFIG_PGTABLE_REPLICATION
+	// pgtable_repl_alloc_pud(mm, virt_to_pfn(pudp));
+	// #endif
 	__pgd_populate(pgdp, __pa(pudp), PUD_TYPE_TABLE);
 }
 #else

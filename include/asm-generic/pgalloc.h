@@ -82,7 +82,11 @@ static inline pgtable_t __pte_alloc_one(struct mm_struct *mm, gfp_t gfp)
  */
 static inline pgtable_t pte_alloc_one(struct mm_struct *mm)
 {
-	return __pte_alloc_one(mm, GFP_PGTABLE_USER);
+	pgtable_t page;
+	page = __pte_alloc_one(mm, GFP_PGTABLE_USER);
+	page->replica_node_id = -1;
+	return page;
+	// return __pte_alloc_one(mm, GFP_PGTABLE_USER);
 }
 #endif
 
