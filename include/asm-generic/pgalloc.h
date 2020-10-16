@@ -61,6 +61,7 @@ static inline pgtable_t __pte_alloc_one(struct mm_struct *mm, gfp_t gfp)
 	struct page *pte;
 
 	pte = alloc_page(gfp);
+	pte->replica_node_id = -1;
 	if (!pte)
 		return NULL;
 	if (!pgtable_pte_page_ctor(pte)) {
@@ -82,11 +83,7 @@ static inline pgtable_t __pte_alloc_one(struct mm_struct *mm, gfp_t gfp)
  */
 static inline pgtable_t pte_alloc_one(struct mm_struct *mm)
 {
-	pgtable_t page;
-	page = __pte_alloc_one(mm, GFP_PGTABLE_USER);
-	page->replica_node_id = -1;
-	return page;
-	// return __pte_alloc_one(mm, GFP_PGTABLE_USER);
+	return __pte_alloc_one(mm, GFP_PGTABLE_USER);
 }
 #endif
 
