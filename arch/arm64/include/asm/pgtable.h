@@ -740,7 +740,7 @@ static inline void set_pgd(pgd_t *pgdp, pgd_t pgd)
 	dsb(ishst);
 	isb();
 	//pgtrepl	
-	pgtable_repl_set_pgd(pgdp, pgd);
+	// pgtable_repl_set_pgd(pgdp, pgd);
 }
 static inline void native_set_pgd(pgd_t *pgdp, pgd_t pgd)
 {
