@@ -223,12 +223,13 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 
 	/* get the page of the previously allocated pgd */
 	pgd = page_of_ptable_entry(mm->pgd);
-
+	pgd->replica_node_id = -1;
 	pgd2 = pgd;
 	for (i = 0; i < nr_node_ids; i++) {
 
 		/* allocte a new page, and place it in the replica list */
 		pgd2->replica = pgtable_cache_alloc(i);
+		pgd2->replica->replica_node_id = i;
 		if (pgd2->replica == NULL) {
 			goto cleanup;
 		}
@@ -715,7 +716,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	// panic("PTREPL: %s:%d:  not yet implemented by Mitosis\n", __FUNCTION__, __LINE__);
 	int i;
 	long offset;
-	struct page *page_pgd, *page_pud;
+	struct page *page_pgd, *page_pud,*page_tmp;
 
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
@@ -744,6 +745,14 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 			native_set_pgd(pgdp, pgdval);
 		}
 		return;
+	}
+	if(page_pgd->replica_node_id != -1)
+	{
+		for (i = 0; i < (nr_node_ids-page_pgd->replica_node_id); i++)
+		{
+			page_tmp = page_pgd->replica;
+		}
+		page_pgd = page_tmp;
 	}
 	//如果pud 的page 存在，那就重新计算各节点副本pud的地址值，并放入副本的pgd表中。
 	for (i = 0; i < nr_node_ids; i++) {
