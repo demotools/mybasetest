@@ -255,7 +255,7 @@ static inline void set_pte(pte_t *ptep, pte_t pte)
 		isb();
 	}
 	//pgtrepl
-	pgtable_repl_set_pte(ptep, pte);
+	// pgtable_repl_set_pte(ptep, pte);
 }
 
 static inline void native_set_pte(pte_t *ptep, pte_t pte)
@@ -547,7 +547,7 @@ static inline void set_pmd(pmd_t *pmdp, pmd_t pmd)
 		isb();
 	}
 	//pgtrepl
-	pgtable_repl_set_pmd(pmdp, pmd);	
+	// pgtable_repl_set_pmd(pmdp, pmd);	
 }
 
 static inline void native_set_pmd(pmd_t *pmdp, pmd_t pmd)
@@ -646,7 +646,7 @@ static inline void set_pud(pud_t *pudp, pud_t pud)
 		isb();
 	}  
 	//pgtrepl
-	pgtable_repl_set_pud(pudp, pud);
+	// pgtable_repl_set_pud(pudp, pud);
 }
 
 static inline void native_set_pud(pud_t *pudp, pud_t pud)
