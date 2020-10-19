@@ -734,8 +734,14 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	//取出pgdp 在pgd 中的偏移 offset
 	offset = ((long)pgdp & ~PAGE_MASK);
 	check_offset(offset);
-
+	printk("------ 1 . page_pgd->replica_node_id = %d------\n",page_pgd->replica_node_id);
 	page_pud = pgd_page(pgdval);
+	while(page_pgd->replica_node_id != -1)
+	{
+		page_tmp = page_pgd->replica;
+		page_pgd = page_tmp;
+		printk("------2 . page_pgd->replica_node_id = %d------\n",page_pgd->replica_node_id);	
+	}
 	//如果pud 的page 还没有被放入内存中，那么就直接把pgdval这个地址值设置到各节点的副本pgd表中。
 	if (!page_pud || pgd_none(pgdval) || !pgd_present(pgdval)) {
 		printk("PTREP: set_pgd  origin pgd=%lx  and pgdval=%lx\n",(long)pgdp, (long)pgd_val(pgdval));
@@ -748,14 +754,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 		}
 		return;
 	}
-	// if(page_pgd->replica_node_id != -1)
-	// {
-	// 	for (i = 0; i < (nr_node_ids-page_pgd->replica_node_id); i++)
-	// 	{
-	// 		page_tmp = page_pgd->replica;
-	// 	}
-	// 	page_pgd = page_tmp;
-	// }
+	
 	//如果pud 的page 存在，那就重新计算各节点副本pud的地址值，并放入副本的pgd表中。
 	for (i = 0; i < nr_node_ids; i++) {
 		page_pud = page_pud->replica;
