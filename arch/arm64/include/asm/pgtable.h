@@ -255,7 +255,7 @@ static inline void set_pte(pte_t *ptep, pte_t pte)
 		isb();
 	}
 	//pgtrepl
-	pgtable_repl_set_pte(ptep, pte);
+	// pgtable_repl_set_pte(ptep, pte);
 }
 
 static inline void native_set_pte(pte_t *ptep, pte_t pte)
