@@ -672,8 +672,14 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 	printk("------PTREPL: set_pud start------\n");
 	offset = ((long)pudp & ~PAGE_MASK);
 	check_offset(offset);
-
+printk("------ 1 . page_pud->replica_node_id = %d------\n",page_pud->replica_node_id);
 	page_pmd = pud_page(pudval);
+	while(page_pud->replica_node_id != -1)
+	{
+		page_tmp = page_pud->replica;
+		page_pud = page_tmp;
+		printk("------2 . page_pud->replica_node_id = %d------\n",page_pud->replica_node_id);
+	}
 
 	/* there is no age for this entry or the entry is huge or the entry is not present */
 	if (!page_pmd || !pud_present(pudval) || pud_none(pudval)) {
@@ -688,14 +694,7 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 		return;
 	}
 
-	// if(page_pud->replica_node_id != -1)
-	// {
-	// 	for (i = 0; i < (nr_node_ids-page_pud->replica_node_id); i++)
-	// 	{
-	// 		page_tmp = page_pud->replica;
-	// 	}
-	// 	page_pud = page_tmp;
-	// }
+	
 	
 	for (i = 0; i < nr_node_ids; i++) {
 		page_pud = page_pud->replica;

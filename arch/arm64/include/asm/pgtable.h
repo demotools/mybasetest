@@ -646,7 +646,7 @@ static inline void set_pud(pud_t *pudp, pud_t pud)
 		isb();
 	}  
 	//pgtrepl
-	// pgtable_repl_set_pud(pudp, pud);
+	pgtable_repl_set_pud(pudp, pud);
 }
 
 static inline void native_set_pud(pud_t *pudp, pud_t pud)
