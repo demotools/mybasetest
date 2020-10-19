@@ -209,7 +209,7 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 		mm->repl_pgd_enabled = false;
 		return 0;
 	}
-	printk("[mitosis] pgd_alloc start: pid = %d\n",current->pid);
+	// printk("[mitosis] pgd_alloc start: pid = %d\n",current->pid);
 	if (pgtable_repl_activated) {
 		mm->repl_pgd_enabled = true;
 	}
@@ -279,7 +279,7 @@ void pgtable_repl_pgd_free(struct mm_struct *mm, pgd_t *pgd)
 	// if (unlikely(!pgtable_repl_initialized)) {
 	// 	return;
 	// }
-	printk("[mitosis] pgd_free start: pid = %d\n",current->pid);
+	// printk("[mitosis] pgd_free start: pid = %d\n",current->pid);
 	pgd_page = page_of_ptable_entry(mm->pgd);
 	if (pgd_page->replica == NULL) {
 		if (mm->repl_pgd[0] != mm->pgd) {
