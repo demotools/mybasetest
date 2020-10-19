@@ -620,14 +620,14 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 		}
 		return;
 	}
-	if(page_pmd->replica_node_id != -1)
-	{
-		for (i = 0; i < (nr_node_ids-page_pmd->replica_node_id); i++)
-		{
-			page_tmp = page_pmd->replica;
-		}
-		page_pmd = page_tmp;
-	}
+	// if(page_pmd->replica_node_id != -1)
+	// {
+	// 	for (i = 0; i < (nr_node_ids-page_pmd->replica_node_id); i++)
+	// 	{
+	// 		page_tmp = page_pmd->replica;
+	// 	}
+	// 	page_pmd = page_tmp;
+	// }
 
 	/* where the entry points to */
 	for (i = 0; i < nr_node_ids; i++) {
@@ -686,14 +686,14 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 		return;
 	}
 
-	if(page_pud->replica_node_id != -1)
-	{
-		for (i = 0; i < (nr_node_ids-page_pud->replica_node_id); i++)
-		{
-			page_tmp = page_pud->replica;
-		}
-		page_pud = page_tmp;
-	}
+	// if(page_pud->replica_node_id != -1)
+	// {
+	// 	for (i = 0; i < (nr_node_ids-page_pud->replica_node_id); i++)
+	// 	{
+	// 		page_tmp = page_pud->replica;
+	// 	}
+	// 	page_pud = page_tmp;
+	// }
 	
 	for (i = 0; i < nr_node_ids; i++) {
 		page_pud = page_pud->replica;
@@ -746,14 +746,14 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 		}
 		return;
 	}
-	if(page_pgd->replica_node_id != -1)
-	{
-		for (i = 0; i < (nr_node_ids-page_pgd->replica_node_id); i++)
-		{
-			page_tmp = page_pgd->replica;
-		}
-		page_pgd = page_tmp;
-	}
+	// if(page_pgd->replica_node_id != -1)
+	// {
+	// 	for (i = 0; i < (nr_node_ids-page_pgd->replica_node_id); i++)
+	// 	{
+	// 		page_tmp = page_pgd->replica;
+	// 	}
+	// 	page_pgd = page_tmp;
+	// }
 	//如果pud 的page 存在，那就重新计算各节点副本pud的地址值，并放入副本的pgd表中。
 	for (i = 0; i < nr_node_ids; i++) {
 		page_pud = page_pud->replica;
