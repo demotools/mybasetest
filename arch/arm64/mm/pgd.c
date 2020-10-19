@@ -327,7 +327,7 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 	if (p == NULL) {
 		return;
 	}
-
+	p->replica_node_id = -1;
 	if (!mm->repl_pgd_enabled) {
 		p->replica = NULL;
 		return;
@@ -345,12 +345,12 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 		}
 		return;
 	}
-	p->replica_node_id = -1;
+	
 	p2 = p;
 	for (i = 0; i < nr_node_ids; i++) {
 		/* allocte a new page, and place it in the replica list */
 		p2->replica  = pgtable_cache_alloc(i);
-		p2->replica_node_id = i;
+		p2->replica->replica_node_id = i;
 		if (p2->replica == NULL) {
 			goto cleanup;
 		}
