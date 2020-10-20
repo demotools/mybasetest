@@ -91,7 +91,7 @@ static inline void pud_free(struct mm_struct *mm, pud_t *pudp)
 {
 	BUG_ON((unsigned long)pudp & (PAGE_SIZE-1));
 	#ifdef CONFIG_PGTABLE_REPLICATION
-	pgtable_repl_release_pud(virt_to_pfn(pudp);
+	pgtable_repl_release_pud(virt_to_pfn(pudp));
 	#endif
 	free_page((unsigned long)pudp);
 }
