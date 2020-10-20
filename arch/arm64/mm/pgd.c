@@ -609,6 +609,13 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 
 	offset = ((long)pmdp & ~PAGE_MASK);
 	check_offset(offset);
+	printk("------ 1 . page_pmd->replica_node_id = %d------\n",page_pmd->replica_node_id);
+	while(page_pmd->replica_node_id != -1)
+	{
+		page_tmp = page_pmd->replica;
+		page_pmd = page_tmp;
+		printk("------2 . page_pmd->replica_node_id = %d------\n",page_pmd->replica_node_id);
+	}
 
 	/* the entry is a large entry i.e. pointing to a frame, or the entry is not valid */
 	if (!page_pte || pmd_none(pmdval) || !pmd_present(pmdval)) {
@@ -622,14 +629,7 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 		}
 		return;
 	}
-	// if(page_pmd->replica_node_id != -1)
-	// {
-	// 	for (i = 0; i < (nr_node_ids-page_pmd->replica_node_id); i++)
-	// 	{
-	// 		page_tmp = page_pmd->replica;
-	// 	}
-	// 	page_pmd = page_tmp;
-	// }
+	
 
 	/* where the entry points to */
 	for (i = 0; i < nr_node_ids; i++) {

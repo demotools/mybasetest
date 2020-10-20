@@ -547,7 +547,7 @@ static inline void set_pmd(pmd_t *pmdp, pmd_t pmd)
 		isb();
 	}
 	//pgtrepl
-	// pgtable_repl_set_pmd(pmdp, pmd);	
+	pgtable_repl_set_pmd(pmdp, pmd);	
 }
 
 static inline void native_set_pmd(pmd_t *pmdp, pmd_t pmd)
