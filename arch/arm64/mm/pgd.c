@@ -561,15 +561,15 @@ void pgtable_repl_set_pte_with_log(pte_t *ptep, pte_t pteval)
 	
 	offset = (long)ptep - (long)page_to_virt(page_pte);
 	check_offset(offset);
-	printk("------ 1 . page_pte->replica_node_id = %d------\n",page_pte->replica_node_id);
-	while(page_pte->replica_node_id != -1)
-	{
-		page_tmp = page_pte->replica;
-		page_pte = page_tmp;
-		// ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
-		// native_set_pte(ptep, pteval);
-		printk("------2 . page_pte->replica_node_id = %d------\n",page_pte->replica_node_id);
-	}
+	// printk("------ 1 . page_pte->replica_node_id = %d------\n",page_pte->replica_node_id);
+	// while(page_pte->replica_node_id != -1)
+	// {
+	// 	page_tmp = page_pte->replica;
+	// 	page_pte = page_tmp;
+	// 	// ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+	// 	// native_set_pte(ptep, pteval);
+	// 	printk("------2 . page_pte->replica_node_id = %d------\n",page_pte->replica_node_id);
+	// }
 
 	for (i = 0; i < nr_node_ids; i++) {
 		page_pte = page_pte->replica;
