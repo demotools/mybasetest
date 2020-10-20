@@ -514,7 +514,7 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	if (page_pte->replica == NULL) {
 		return;
 	}
-	// printk("------PTREPL: set_pte start------\n");
+	printk("------PTREPL: set_pte start------\n");
 	
 	offset = (long)ptep - (long)page_to_virt(page_pte);
 	check_offset(offset);
@@ -557,10 +557,19 @@ void pgtable_repl_set_pte_with_log(pte_t *ptep, pte_t pteval)
 	if (page_pte->replica == NULL) {
 		return;
 	}
-	printk("------PTREPL: set_pte start------\n");
+	printk("------PTREPL: set_pte start with log------\n");
 	
 	offset = (long)ptep - (long)page_to_virt(page_pte);
 	check_offset(offset);
+	printk("------ 1 . page_pte->replica_node_id = %d------\n",page_pte->replica_node_id);
+	while(page_pte->replica_node_id != -1)
+	{
+		page_tmp = page_pte->replica;
+		page_pte = page_tmp;
+		// ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+		// native_set_pte(ptep, pteval);
+		printk("------2 . page_pte->replica_node_id = %d------\n",page_pte->replica_node_id);
+	}
 
 	for (i = 0; i < nr_node_ids; i++) {
 		page_pte = page_pte->replica;
@@ -1018,15 +1027,15 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 						continue;
 					}
 					pte_num++;
-					if (pte_num<10)
-					{
-						printk("PTREP: pte_idx = %ld，and pte=%lx  and pte[%ld]=%lx\n",pte_idx,(long)(pte + pte_idx),pte_idx, (long)pte_val(pte[pte_idx]));
-						pgtable_repl_set_pte_with_log(pte + pte_idx, pte[pte_idx]);
-					}
-					else
-					{
+					// if (pte_num<10)
+					// {
+					// 	printk("PTREP: pte_idx = %ld，and pte=%lx  and pte[%ld]=%lx\n",pte_idx,(long)(pte + pte_idx),pte_idx, (long)pte_val(pte[pte_idx]));
+					// 	pgtable_repl_set_pte_with_log(pte + pte_idx, pte[pte_idx]);
+					// }
+					// else
+					// {
 						pgtable_repl_set_pte(pte + pte_idx, pte[pte_idx]);
-					}
+					// }
 					// set_pte(pte + pte_idx, pte[pte_idx]);				
 				}
 			}

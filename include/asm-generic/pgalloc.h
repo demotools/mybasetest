@@ -44,6 +44,7 @@ static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 	free_page((unsigned long)pte);
 }
 
+#include <asm/pgtable.h>
 /**
  * __pte_alloc_one - allocate a page for PTE-level user page table
  * @mm: the mm_struct of the current context
@@ -61,7 +62,10 @@ static inline pgtable_t __pte_alloc_one(struct mm_struct *mm, gfp_t gfp)
 	struct page *pte;
 
 	pte = alloc_page(gfp);
+	#ifdef CONFIG_PGTABLE_REPLICATION
 	pte->replica_node_id = -1;
+	pgtable_repl_alloc_pte(mm, virt_to_pfn(page_to_virt(pte)));
+	#endif
 	if (!pte)
 		return NULL;
 	if (!pgtable_pte_page_ctor(pte)) {
@@ -99,6 +103,9 @@ static inline pgtable_t pte_alloc_one(struct mm_struct *mm)
  */
 static inline void pte_free(struct mm_struct *mm, struct page *pte_page)
 {
+	#ifdef CONFIG_PGTABLE_REPLICATION
+	pgtable_repl_release_pte(virt_to_pfn(page_to_virt(pte_page)));
+	#endif
 	pgtable_pte_page_dtor(pte_page);
 	__free_page(pte_page);
 }

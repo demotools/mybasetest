@@ -45,6 +45,9 @@ static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long addr)
 static inline void pmd_free(struct mm_struct *mm, pmd_t *pmdp)
 {
 	BUG_ON((unsigned long)pmdp & (PAGE_SIZE-1));
+	#ifdef CONFIG_PGTABLE_REPLICATION
+	pgtable_repl_release_pmd(virt_to_pfn(pmdp));
+	#endif
 	pgtable_pmd_page_dtor(virt_to_page(pmdp));
 	free_page((unsigned long)pmdp);
 }
@@ -87,6 +90,9 @@ static inline pud_t *pud_alloc_one(struct mm_struct *mm, unsigned long addr)
 static inline void pud_free(struct mm_struct *mm, pud_t *pudp)
 {
 	BUG_ON((unsigned long)pudp & (PAGE_SIZE-1));
+	#ifdef CONFIG_PGTABLE_REPLICATION
+	pgtable_repl_release_pud(virt_to_pfn(pudp);
+	#endif
 	free_page((unsigned long)pudp);
 }
 
@@ -137,9 +143,9 @@ pmd_populate_kernel(struct mm_struct *mm, pmd_t *pmdp, pte_t *ptep)
 static inline void
 pmd_populate(struct mm_struct *mm, pmd_t *pmdp, pgtable_t ptep)
 {
-	#ifdef CONFIG_PGTABLE_REPLICATION
-	pgtable_repl_alloc_pte(mm, virt_to_pfn(page_to_virt(ptep)));
-	#endif
+	// #ifdef CONFIG_PGTABLE_REPLICATION
+	// pgtable_repl_alloc_pte(mm, virt_to_pfn(page_to_virt(ptep)));
+	// #endif
 	__pmd_populate(pmdp, page_to_phys(ptep), PMD_TYPE_TABLE);
 }
 #define pmd_pgtable(pmd) pmd_page(pmd)
