@@ -25,6 +25,7 @@ pgd_t *pgd_alloc(struct mm_struct *mm)
 	{
 		pgd_t * pgd = (pgd_t *)__get_free_page(gfp);
 		mm->pgd = pgd;
+		printk("[mitosis-origin] pgd_alloc for mm=%lx and mm->pgd =%lx.\n",(long)mm,(long)mm->pgd);
 		/* this will replicate the pgd */
 		pgtable_repl_pgd_alloc(mm);
 		return pgd;
@@ -37,6 +38,7 @@ void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 {
 	if (PGD_SIZE == PAGE_SIZE)
 	{
+		printk("[mitosis-origin] pgd_free for mm=%lx and pgd =%lx and mm->pgd=%lx.\n",(long)mm,(long)pgd,(long)mm->pgd);
 		pgtable_repl_pgd_free(mm, pgd);
 		free_page((unsigned long)pgd);
 	}
@@ -288,7 +290,7 @@ void pgtable_repl_pgd_free(struct mm_struct *mm, pgd_t *pgd)
 		return;
 	}
 	printk("------PTREPL: free pgd start------\n");
-	printk("[mitosis] pgtable_repl_pgd_free mm->pgd=%lx.\n",(long)mm->pgd);
+	printk("[mitosis] pgtable_repl_pgd_free freed pgd=%lx and mm->pgd=%lx.\n",(long)pgd,(long)mm->pgd);
 	pgd_page = pgd_page->replica;
 
 	/* XXX: check if there are infact replicas */
