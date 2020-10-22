@@ -775,7 +775,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 		
 		//参考了pgd_populate 中生成pudp的方法
 		pgdval = __pgd(__phys_to_pgd_val(page_to_phys(page_pud)) | PUD_TYPE_TABLE);
-		__pa(pudp)
+		
 		// pgdval = native_make_pgd((page_to_pfn(page_pud) << PAGE_SHIFT) | pgd_flags(pgdval));
 		printk("PTREP: set_pgd offset=%lx and node0 origin pgd=%lx  and pgd+offset=%lx  and pud=%lx and pdgval=%lx\n",offset,(long)page_to_virt(page_pgd), (long)pgdp, (long)page_to_virt(page_pud),(long)pgd_val(pgdval));
 		printk("PTREP: set_pgd  origin pgdval=%lx  and another func pgdval=%lx\n",(long)pgd_val(pgdval),(long)pgd_val(__pgd(__phys_to_pgd_val(virt_to_phys(page_to_virt(page_pud))) | PUD_TYPE_TABLE)));
