@@ -956,6 +956,8 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		return 0;
 	}
 	printk("PTREP: Called pgtbl_repl_prepare_replication\n");
+	mm->repl_pgd_enabled = true;
+	return 0;
 	pgd = (pgd_t *)mm->pgd;
 	task_lock(current);
 	spin_lock(&mm->page_table_lock);
