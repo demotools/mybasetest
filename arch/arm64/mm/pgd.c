@@ -500,6 +500,7 @@ void pgtable_repl_release_pud(unsigned long pfn)
 
 void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 {
+	return;
 	// printk("PTREP: Called pgtable_repl_set_pte\n");
 	int i;
 	long offset;
