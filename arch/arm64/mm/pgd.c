@@ -518,7 +518,7 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	if (page_pte->replica == NULL) {
 		return;
 	}
-	return;
+	
 	printk("------PTREPL: set_pte start------\n");
 	
 	offset = (long)ptep - (long)page_to_virt(page_pte);
