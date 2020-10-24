@@ -319,11 +319,6 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 {
 	int i;
 	struct page *p, *p2;
-
-	if (unlikely(!pgtable_repl_initialized)) {
-		return;
-	}
-
 	/* obtain the page for the pfn */
 	p = pfn_to_page(pfn);
 	if (p == NULL) {
@@ -396,9 +391,7 @@ static inline void __pgtable_repl_release_one(unsigned long pfn)
 {
 	int i;
 	struct page *p, *p2, *pcurrent;
-	if (unlikely(!pgtable_repl_initialized)) {
-		return;
-	}
+	
 	p = pfn_to_page(pfn);
 	if (unlikely(p == NULL)) {
 		return;
@@ -430,32 +423,212 @@ static inline void __pgtable_repl_release_one(unsigned long pfn)
 	p->replica = NULL;
 }
 
+static inline void __pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long pfn)
+{
+	int i;
+	struct page *p, *p2;
 
+	/* obtain the page for the pfn */
+	p = pfn_to_page(pfn);
+	if (p == NULL) {
+		return;
+	}
+	p->replica_node_id = -1;
+	if (!mm->repl_pgd_enabled) {
+		p->replica = NULL;
+		return;
+	}
+
+	if (p->replica) {
+		printk("PTREP: Called alloc on an already allocated replica... verifying!\n");
+		p2 = p->replica;
+		for (i = 0; i < nr_node_ids; i++) {
+			check_page_node(p2, i);
+			p2 = p2->replica;
+		}
+		if (p2 != p) {
+			printk("%s:%d: PTREPL: NOT THE ASAME????\n", __FUNCTION__, __LINE__);
+		}
+		return;
+	}
+	
+	p2 = p;
+	for (i = 0; i < nr_node_ids; i++) {
+		/* allocte a new page, and place it in the replica list */
+		p2->replica  = pgtable_cache_alloc(i);
+		p2->replica->replica_node_id = i;
+		if (p2->replica == NULL) {
+			goto cleanup;
+		}
+		
+		printk("[mitosis] __pgtable_repl_alloc_one origin pagep=%lx and new pagep = %lx\n",(long) page_to_virt(p),(long)page_to_virt(p2->replica));
+		check_page_node(p2->replica, i);
+
+		if (!pgtable_pmd_page_ctor(p2->replica)) {
+			// __free_page(page);
+			panic("Failed to call ctor!\n");
+		}
+		/* set the replica pgd poiter */
+		p2 = p2->replica;
+	}
+
+	/* finish the loop: last -> first replica */
+	p2->replica = p;
+
+	/* let's verify */
+	#if 1
+	p2 = p->replica;
+	for (i = 0; i < nr_node_ids; i++) {
+		//printk("page: %lx", (long)p2);
+		check_page_node(p2, i);
+		p2 = p2->replica;
+	}
+	if (p2 != p) {
+		panic("%s:%d: PTREPL: NOT THE ASAME????\n", __FUNCTION__, __LINE__);
+	}
+	#endif
+	return;
+
+	cleanup:
+
+	panic("%s:%d: PTREPL: FAILED!!!!\n", __FUNCTION__, __LINE__);
+}
+static inline void __pgtable_repl_release_pmd(unsigned long pfn)
+{
+	int i;
+	struct page *p, *p2, *pcurrent;
+	
+	p = pfn_to_page(pfn);
+	if (unlikely(p == NULL)) {
+		return;
+	}
+
+	if (p->replica == NULL) {
+		return;
+	}
+	p2 = p->replica;
+	for (i = 0; i < nr_node_ids; i++) {
+		check_page_node(p2, i);
+		pcurrent = p2;
+		pgtable_pmd_page_dtor(pcurrent);
+		p2 = p2->replica;
+		pgtable_cache_free(i, pcurrent);
+	}
+
+	p->replica = NULL;
+}
+static inline void __pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long pfn)
+{
+	int i;
+	struct page *p, *p2;
+
+	/* obtain the page for the pfn */
+	p = pfn_to_page(pfn);
+	if (p == NULL) {
+		return;
+	}
+	p->replica_node_id = -1;
+	if (!mm->repl_pgd_enabled) {
+		p->replica = NULL;
+		return;
+	}
+
+	if (p->replica) {
+		printk("PTREP: Called alloc on an already allocated replica... verifying!\n");
+		p2 = p->replica;
+		for (i = 0; i < nr_node_ids; i++) {
+			check_page_node(p2, i);
+			p2 = p2->replica;
+		}
+		if (p2 != p) {
+			printk("%s:%d: PTREPL: NOT THE ASAME????\n", __FUNCTION__, __LINE__);
+		}
+		return;
+	}
+	
+	p2 = p;
+	for (i = 0; i < nr_node_ids; i++) {
+		/* allocte a new page, and place it in the replica list */
+		p2->replica  = pgtable_cache_alloc(i);
+		p2->replica->replica_node_id = i;
+		if (p2->replica == NULL) {
+			goto cleanup;
+		}
+		
+		printk("[mitosis] __pgtable_repl_alloc_one origin pagep=%lx and new pagep = %lx\n",(long) page_to_virt(p),(long)page_to_virt(p2->replica));
+		check_page_node(p2->replica, i);
+
+		if (!pgtable_pte_page_ctor(p2->replica)) {
+			// __free_page(page);
+			panic("Failed to call ctor!\n");
+		}
+		/* set the replica pgd poiter */
+		p2 = p2->replica;
+	}
+
+	/* finish the loop: last -> first replica */
+	p2->replica = p;
+
+	/* let's verify */
+	#if 1
+	p2 = p->replica;
+	for (i = 0; i < nr_node_ids; i++) {
+		//printk("page: %lx", (long)p2);
+		check_page_node(p2, i);
+		p2 = p2->replica;
+	}
+	if (p2 != p) {
+		panic("%s:%d: PTREPL: NOT THE ASAME????\n", __FUNCTION__, __LINE__);
+	}
+	#endif
+	return;
+
+	cleanup:
+
+	panic("%s:%d: PTREPL: FAILED!!!!\n", __FUNCTION__, __LINE__);
+}
+static inline void __pgtable_repl_release_pte(unsigned long pfn)
+{
+	int i;
+	struct page *p, *p2, *pcurrent;
+	
+	p = pfn_to_page(pfn);
+	if (unlikely(p == NULL)) {
+		return;
+	}
+
+	if (p->replica == NULL) {
+		return;
+	}
+	p2 = p->replica;
+	for (i = 0; i < nr_node_ids; i++) {
+		check_page_node(p2, i);
+		pcurrent = p2;
+		pgtable_pte_page_dtor(pcurrent);
+		p2 = p2->replica;
+		pgtable_cache_free(i, pcurrent);
+	}
+
+	p->replica = NULL;
+}
 void pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long pfn)
 {
-	// if (unlikely(!pgtable_repl_initialized)) {
-	// 	return;
-	// }
+	__pgtable_repl_alloc_pte(mm, pfn);
 	// printk("------PTREPL: alloc pte start------\n");
-	__pgtable_repl_alloc_one(mm, pfn);
+	// __pgtable_repl_alloc_one(mm, pfn);
 	// printk("------PTREPL: alloc pte done------\n");
 }
 
 void pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long pfn)
 {
-	// if (unlikely(!pgtable_repl_initialized)) {
-	// 	return;
-	// }
+	__pgtable_repl_alloc_pmd(mm, pfn);
 	// printk("------PTREPL: alloc pmd start------\n");
-	__pgtable_repl_alloc_one(mm, pfn);
+	// __pgtable_repl_alloc_one(mm, pfn);
 	// printk("------PTREPL: alloc pmd done------\n");
 }
 
 void pgtable_repl_alloc_pud(struct mm_struct *mm, unsigned long pfn)
 {
-	// if (unlikely(!pgtable_repl_initialized)) {
-	// 	return;
-	// }
 	// printk("------PTREPL: alloc pud start------\n");
 	__pgtable_repl_alloc_one(mm, pfn);
 	// printk("------PTREPL: alloc pud done------\n");
@@ -463,29 +636,22 @@ void pgtable_repl_alloc_pud(struct mm_struct *mm, unsigned long pfn)
 
 void pgtable_repl_release_pte(unsigned long pfn)
 {
-	// if (unlikely(!pgtable_repl_initialized)) {
-	// 	return;
-	// }
+	__pgtable_repl_release_pte(pfn);
 	// printk("------PTREPL: release pte start------\n");
-	__pgtable_repl_release_one(pfn);
+	// __pgtable_repl_release_one(pfn);
 	// printk("------PTREPL: release pte done------\n");
 }
 
 void pgtable_repl_release_pmd(unsigned long pfn)
 {
-	// if (unlikely(!pgtable_repl_initialized)) {
-	// 	return;
-	// }
+	__pgtable_repl_release_pmd(pfn);
 	// printk("------PTREPL: release pmd start------\n");
-	__pgtable_repl_release_one(pfn);
+	// __pgtable_repl_release_one(pfn);
 	// printk("------PTREPL: release pmd done------\n");
 }
 
 void pgtable_repl_release_pud(unsigned long pfn)
 {
-	// if (unlikely(!pgtable_repl_initialized)) {
-	// 	return;
-	// }
 	// printk("------PTREPL: release pud start------\n");
 	__pgtable_repl_release_one(pfn);
 	// printk("------PTREPL: release pud done------\n");
