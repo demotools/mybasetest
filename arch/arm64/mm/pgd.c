@@ -685,14 +685,14 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	
 	//因为ptep 是 pte表中的一个entry的地址，我们为了获取这个entry 对于这个pte表的offset，所以需要获取这个表的page，然后通过page得到这个page的虚拟地址， 然后就能用ptep和这个虚拟地址计算offset
 	page_pte = page_of_ptable_entry(ptep);
-	if (unlikely(!(page_pte)))
+	if (!page_pte)
 	{
 		return;
 	}
-	// if (unlikely(page_pte == NULL))
-	// {
-	// 	return;
-	// }
+	if (page_pte == NULL)
+	{
+		return;
+	}
 	check_page(page_pte);
 	if (page_pte->replica == NULL) {
 		return;
