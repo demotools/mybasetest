@@ -1187,7 +1187,8 @@ void __set_fixmap(enum fixed_addresses idx,
 		// set_pte(ptep, pfn_pte(phys >> PAGE_SHIFT, flags));
 		native_set_pte(ptep, pfn_pte(phys >> PAGE_SHIFT, flags));
 	} else {
-		pte_clear(&init_mm, addr, ptep);
+		// pte_clear(&init_mm, addr, ptep);
+		native_set_pte(ptep, __pte(0));
 		flush_tlb_kernel_range(addr, addr+PAGE_SIZE);
 	}
 }
