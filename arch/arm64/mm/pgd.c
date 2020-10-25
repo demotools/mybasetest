@@ -685,14 +685,6 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	
 	//因为ptep 是 pte表中的一个entry的地址，我们为了获取这个entry 对于这个pte表的offset，所以需要获取这个表的page，然后通过page得到这个page的虚拟地址， 然后就能用ptep和这个虚拟地址计算offset
 	page_pte = page_of_ptable_entry(ptep);
-	if (!page_pte)
-	{
-		return;
-	}
-	if (page_pte == NULL)
-	{
-		return;
-	}
 	check_page(page_pte);
 	if (page_pte->replica == NULL) {
 		return;
@@ -733,7 +725,6 @@ void pgtable_repl_set_pte_with_log(pte_t *ptep, pte_t pteval)
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
 	}
-	printk("------PTREPL: set_pte 1------\n");
 	//因为ptep 是 pte表中的一个entry的地址，我们为了获取这个entry 对于这个pte表的offset，所以需要获取这个表的page，然后通过page得到这个page的虚拟地址， 然后就能用ptep和这个虚拟地址计算offset
 	page_pte = page_of_ptable_entry(ptep);
 	check_page(page_pte);
@@ -1171,8 +1162,6 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		return 0;
 	}
 	printk("PTREP: Called pgtbl_repl_prepare_replication\n");
-	mm->repl_pgd_enabled = true;
-	return 0;
 	pgd = (pgd_t *)mm->pgd;
 	task_lock(current);
 	spin_lock(&mm->page_table_lock);

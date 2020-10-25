@@ -1184,11 +1184,14 @@ void __set_fixmap(enum fixed_addresses idx,
 	ptep = fixmap_pte(addr);
 
 	if (pgprot_val(flags)) {
-		// set_pte(ptep, pfn_pte(phys >> PAGE_SHIFT, flags));
-		native_set_pte(ptep, pfn_pte(phys >> PAGE_SHIFT, flags));
+		set_pte(ptep, pfn_pte(phys >> PAGE_SHIFT, flags));
+		// native_set_pte(ptep, pfn_pte(phys >> PAGE_SHIFT, flags));
 	} else {
-		// pte_clear(&init_mm, addr, ptep);
+		#ifdef CONFIG_PGTABLE_REPLICATION
 		native_set_pte(ptep, __pte(0));
+		#else
+		pte_clear(&init_mm, addr, ptep);
+		#endif
 		flush_tlb_kernel_range(addr, addr+PAGE_SIZE);
 	}
 }
