@@ -1263,12 +1263,15 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 	}
 	
 	// cpu_do_switch_mm(mm->pgd,mm);
-	// cpu_set_reserved_ttbr0();
-	// local_flush_tlb_all();
-	// cpu_set_default_tcr_t0sz();
+	cpu_set_reserved_ttbr0();
+	local_flush_tlb_all();
+	cpu_set_default_tcr_t0sz();
 
-	// if (mm != &init_mm && !system_uses_ttbr0_pan())
-	// 	cpu_switch_mm(mm->pgd, mm);
+	if (mm != &init_mm && !system_uses_ttbr0_pan())
+	{
+		cpu_switch_mm(mm->pgd, mm);
+	}
+		
 	// pgtable_repl_write_cr3(__native_read_cr3());
 	printk("PTREP: Called pgtbl_repl_prepare_replication  done\n");
 	return err;
