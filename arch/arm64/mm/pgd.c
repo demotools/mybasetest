@@ -319,6 +319,9 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 {
 	int i;
 	struct page *p, *p2;
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
 	/* obtain the page for the pfn */
 	p = pfn_to_page(pfn);
 	if (p == NULL) {
@@ -427,7 +430,9 @@ static inline void __pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long 
 {
 	int i;
 	struct page *p, *p2;
-
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
 	/* obtain the page for the pfn */
 	p = pfn_to_page(pfn);
 	if (p == NULL) {
@@ -521,7 +526,9 @@ static inline void __pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long 
 {
 	int i;
 	struct page *p, *p2;
-
+	if (unlikely(!pgtable_repl_initialized)) {
+		return;
+	}
 	/* obtain the page for the pfn */
 	p = pfn_to_page(pfn);
 	if (p == NULL) {
@@ -675,12 +682,13 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
 	}
+	printk("------PTREPL: set_pte 1  pte=%lx------\n",(long)pte_val(pteval));
 	
 	//因为ptep 是 pte表中的一个entry的地址，我们为了获取这个entry 对于这个pte表的offset，所以需要获取这个表的page，然后通过page得到这个page的虚拟地址， 然后就能用ptep和这个虚拟地址计算offset
 	page_pte = page_of_ptable_entry(ptep);
-	
+	printk("------PTREPL: set_pte 2  pte=%lx------\n",(long)pte_val(pteval));
 	check_page(page_pte);
-	
+	printk("------PTREPL: set_pte 3  pte=%lx------\n",(long)pte_val(pteval));
 	if (page_pte->replica == NULL) {
 		return;
 	}
@@ -720,7 +728,7 @@ void pgtable_repl_set_pte_with_log(pte_t *ptep, pte_t pteval)
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
 	}
-	
+	printk("------PTREPL: set_pte 1------\n");
 	//因为ptep 是 pte表中的一个entry的地址，我们为了获取这个entry 对于这个pte表的offset，所以需要获取这个表的page，然后通过page得到这个page的虚拟地址， 然后就能用ptep和这个虚拟地址计算offset
 	page_pte = page_of_ptable_entry(ptep);
 	check_page(page_pte);
@@ -953,6 +961,39 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	printk("------PTREPL: set_pgd done------\n");
 }
 
+// void pgtable_ptep_set_wrprotect(struct mm_struct *mm, unsigned long addr, pte_t *ptep)
+// {
+// 	int i;
+// 	long offset;
+// 	struct page *page_pte;
+
+// 	if (unlikely(!pgtable_repl_initialized)) {
+// 		return;
+// 	}
+
+// 	if (!mm->repl_pgd_enabled) {
+// 		return;
+// 	}
+
+// 	page_pte = page_of_ptable_entry(ptep);
+// 	check_page(page_pte);
+
+// 	if (page_pte->replica == NULL) {
+// 		return;
+// 	}
+
+// 	offset = ((long)ptep & ~PAGE_MASK);
+// 	check_offset(offset);
+
+// 	for (i = 0; i < nr_node_ids; i++) {
+// 		page_pte = page_pte->replica;
+// 		check_page_node(page_pte, i);
+
+// 		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+
+// 		clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
+// 	}
+// }
 /*
  * ==================================================================
  * Page Table Cache
