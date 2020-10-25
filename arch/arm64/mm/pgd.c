@@ -682,13 +682,18 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	if (unlikely(!pgtable_repl_initialized)) {
 		return;
 	}
-	printk("------PTREPL: set_pte 1  pte=%lx------\n",(long)pte_val(pteval));
 	
 	//因为ptep 是 pte表中的一个entry的地址，我们为了获取这个entry 对于这个pte表的offset，所以需要获取这个表的page，然后通过page得到这个page的虚拟地址， 然后就能用ptep和这个虚拟地址计算offset
 	page_pte = page_of_ptable_entry(ptep);
-	printk("------PTREPL: set_pte 2  pte=%lx------\n",(long)pte_val(pteval));
+	if (unlikely(!(page_pte)))
+	{
+		return;
+	}
+	// if (unlikely(page_pte == NULL))
+	// {
+	// 	return;
+	// }
 	check_page(page_pte);
-	printk("------PTREPL: set_pte 3  pte=%lx------\n",(long)pte_val(pteval));
 	if (page_pte->replica == NULL) {
 		return;
 	}
