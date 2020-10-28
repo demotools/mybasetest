@@ -1190,8 +1190,8 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pud)), (long)virt_to_pfn(pud));
 		pgtable_repl_alloc_pud(mm, (unsigned long)virt_to_pfn(pud));
 		//	printk("%s:%u set_p4d(p4d[%zu], 0x%lx, 0x%lx\n",__FUNCTION__, __LINE__,  p4d_idx, _PAGE_TABLE | __pa(pud_new), p4d_val(__p4d(_PAGE_TABLE | __pa(pud_new))));
-		pgtable_repl_set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
-		// set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
+		// pgtable_repl_set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
+		set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
 		printk("[mitosis] start search pud .......\n");
 		for (pud_idx = 0; pud_idx < 512; pud_idx++) {
 			if (pud_none(pud[pud_idx])) {
@@ -1209,8 +1209,8 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 			printk("%s:%u pud[%ld]'s pmd=%lx..%lx\n", __FUNCTION__, __LINE__, pud_idx,(long)pmd, (long)pmd + 4095);
 			printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pmd)), (long)virt_to_pfn(pmd));
 			pgtable_repl_alloc_pmd(mm, (unsigned long)virt_to_pfn(pmd));
-			// set_pud(pud + pud_idx,pud[pud_idx]);
-			pgtable_repl_set_pud(pud + pud_idx,pud[pud_idx]);
+			set_pud(pud + pud_idx,pud[pud_idx]);
+			// pgtable_repl_set_pud(pud + pud_idx,pud[pud_idx]);
 
 			for (pmd_idx = 0; pmd_idx < 512; pmd_idx++) {
 
@@ -1230,8 +1230,8 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 				printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pte)), (long)virt_to_pfn(pte));
 
 				pgtable_repl_alloc_pte(mm, page_to_pfn(page_of_ptable_entry(pte)));
-				pgtable_repl_set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
-				// set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
+				// pgtable_repl_set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
+				set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
 
 				for (pte_idx = 0; pte_idx < 512; pte_idx++) {
 					if (pte_none(pte[pte_idx])) {
@@ -1245,9 +1245,9 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 					// }
 					// else
 					// {
-						pgtable_repl_set_pte(pte + pte_idx, pte[pte_idx]);
+						// pgtable_repl_set_pte(pte + pte_idx, pte[pte_idx]);
 					// }
-					// set_pte(pte + pte_idx, pte[pte_idx]);				
+					set_pte(pte + pte_idx, pte[pte_idx]);				
 				}
 			}
 		}
