@@ -1184,13 +1184,13 @@ void __set_fixmap(enum fixed_addresses idx,
 	ptep = fixmap_pte(addr);
 
 	if (pgprot_val(flags)) {
-		#ifdef CONFIG_PGTABLE_REPLICATION
+		#ifdef CONFIG_PGTABLE_REPLICATION //修复perf崩溃的bug
 		native_set_pte(ptep, pfn_pte(phys >> PAGE_SHIFT, flags));
 		#else
 		set_pte(ptep, pfn_pte(phys >> PAGE_SHIFT, flags));
 		#endif
 	} else {
-		#ifdef CONFIG_PGTABLE_REPLICATION
+		#ifdef CONFIG_PGTABLE_REPLICATION//修复perf崩溃的bug
 		native_set_pte(ptep, __pte(0));
 		#else
 		pte_clear(&init_mm, addr, ptep);

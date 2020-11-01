@@ -1324,8 +1324,11 @@ static vm_fault_t do_huge_pmd_wp_page_fallback(struct vm_fault *vmf,
 	pmdp_huge_clear_flush_notify(vma, haddr, vmf->pmd);
 
 	pgtable = pgtable_trans_huge_withdraw(vma->vm_mm, vmf->pmd);
+	#ifdef CONFIG_PGTABLE_REPLICATION
+	pmd_populate_no_rep(vma->vm_mm, &_pmd, pgtable);
+	#else
 	pmd_populate(vma->vm_mm, &_pmd, pgtable);
-
+	#endif
 	for (i = 0; i < HPAGE_PMD_NR; i++, haddr += PAGE_SIZE) {
 		pte_t entry;
 		entry = mk_pte(pages[i], vma->vm_page_prot);
@@ -2200,7 +2203,11 @@ static void __split_huge_zero_page_pmd(struct vm_area_struct *vma,
 	pmdp_huge_clear_flush(vma, haddr, pmd);
 
 	pgtable = pgtable_trans_huge_withdraw(mm, pmd);
+	#ifdef CONFIG_PGTABLE_REPLICATION
+	pmd_populate_no_rep(mm, &_pmd, pgtable);
+	#else
 	pmd_populate(mm, &_pmd, pgtable);
+	#endif
 
 	for (i = 0; i < HPAGE_PMD_NR; i++, haddr += PAGE_SIZE) {
 		pte_t *pte, entry;
@@ -2315,7 +2322,11 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
 	 * This's critical for some architectures (Power).
 	 */
 	pgtable = pgtable_trans_huge_withdraw(mm, pmd);
+	#ifdef CONFIG_PGTABLE_REPLICATION
+	pmd_populate_no_rep(mm, &_pmd, pgtable);
+	#else
 	pmd_populate(mm, &_pmd, pgtable);
+	#endif
 
 	for (i = 0, addr = haddr; i < HPAGE_PMD_NR; i++, addr += PAGE_SIZE) {
 		pte_t entry, *pte;
