@@ -292,7 +292,7 @@ void pgtable_repl_pgd_free(struct mm_struct *mm, pgd_t *pgd)
 	printk("------PTREPL: free pgd start------\n");
 	printk("[mitosis] pgtable_repl_pgd_free freed pgd=%lx and mm->pgd=%lx.\n",(long)pgd,(long)mm->pgd);
 	pgd_page = pgd_page->replica;
-
+	BUG_ON(1);
 	/* XXX: check if there are infact replicas */
 	for (i = 0; i < nr_node_ids; i++) {
 		p = pgd_page;
@@ -927,6 +927,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	if (!page_pud || pgd_none(pgdval) || !pgd_present(pgdval)) {
 		printk("PTREP: set_pgd  origin pgd=%lx  and pgdval=%lx\n",(long)pgdp, (long)pgd_val(pgdval));
 		printk("PTREP: Called pgtable_repl_set_pgd  !page_pud \n");
+		BUG_ON(1);
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pgd = page_pgd->replica;
 			check_page_node(page_pgd, i);
