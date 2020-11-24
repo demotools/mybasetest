@@ -307,7 +307,7 @@ static inline void *phys_to_virt(phys_addr_t x)
 	__typeof__(x) __page = x;					\
 	u64 __idx = ((u64)__page - VMEMMAP_START) / sizeof(struct page);\
 	u64 __addr = PAGE_OFFSET + (__idx * PAGE_SIZE);			\
-	(void *)__tag_set((const void *)__addr, page_kasan_tag(__page));\
+	(void *)__tag_set((const void *)__addr, 0xff);\
 })
 
 #define virt_to_page(x)	({						\
