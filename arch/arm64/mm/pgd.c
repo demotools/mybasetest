@@ -264,7 +264,7 @@ void pgtable_repl_pgd_free(struct mm_struct *mm, pgd_t *pgd)
 	printk("------PTREPL: free pgd start------\n");
 	printk("[mitosis] pgtable_repl_pgd_free freed pgd=%lx and mm->pgd=%lx.\n",(long)pgd,(long)mm->pgd);
 	pgd_page = pgd_page->replica;
-	BUG_ON(1);
+	// BUG_ON(1);
 	/* XXX: check if there are infact replicas */
 	for (i = 0; i < nr_node_ids; i++) {
 		p = pgd_page;
