@@ -36,6 +36,36 @@
 
 #ifdef CONFIG_PGTABLE_REPLICATION
 
+/*
+ * ==================================================================
+ * Debug Macros
+ * ==================================================================
+ */
+
+ #define DEBUG_PGTABLE_REPLICATION
+#ifdef DEBUG_PGTABLE_REPLICATION
+// #include <linux/mmzone.h>
+#define check_page(p) \
+	if (unlikely(!(p))) { printk("PTREPL:%s:%u - page was NULL!\n", __FUNCTION__, __LINE__); }
+
+#define check_offset(offset) if (offset >= 4096 || (offset % 8)) { \
+	printk("PTREPL: %s:%d - offset=%lu, %lu\n", __FUNCTION__, __LINE__, offset, offset % 8); }
+
+#define check_page_node(p, n) do {\
+	if (!virt_addr_valid((void *)p)) {/*printk("PTREP: PAGE IS NOT VALID!\n");*/} \
+	if (p == NULL) {printk("PTREPL: PAGE WAS NULL!\n");} \
+	if (pfn_to_nid(page_to_pfn(p)) != (n)) { \
+		printk("PTREPL: %s:%u page table nid mismatch! pfn: %zu, nid %u expected: %u\n", \
+		__FUNCTION__, __LINE__, page_to_pfn(p), pfn_to_nid(page_to_pfn(p)), (int)(n)); \
+		dump_stack();\
+	}} while(0);
+
+#else
+#define check_page(p)
+#define check_offset(offset)
+#define check_page_node(p, n)
+#endif
+
 pgd_t *mm_get_pgd_for_node(struct mm_struct *mm);
 
 static inline void native_set_pgd(pgd_t *pgdp, pgd_t pgd);
@@ -888,7 +918,33 @@ static inline int __ptep_test_and_clear_young(pte_t *ptep)
 
 static inline int ptep_test_and_clear_young(struct vm_area_struct *vma,
 					    unsigned long address,
-					    pte_t *ptep);
+					    pte_t *ptep)
+{
+	int i;
+	long offset;
+	struct page *page;
+	int ret = 0;
+	ret = __ptep_test_and_clear_young(ptep);
+
+	page = page_of_ptable_entry(ptep);
+	check_page(page);
+	//通过链表页的存在来判断当前的mm是否支持页表复制
+	if (page->replica == NULL) {
+		return ret;
+	}
+	offset = ((long)ptep & ~PAGE_MASK);
+	check_offset(offset);
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page = page->replica;
+		check_page_node(page, i);
+
+		ptep = (pte_t *)((long)page_to_virt(page) + offset);
+		__ptep_test_and_clear_young(ptep);
+	}
+
+	return ret;
+}
 
 #define __HAVE_ARCH_PTEP_CLEAR_YOUNG_FLUSH
 static inline int ptep_clear_flush_young(struct vm_area_struct *vma,
@@ -923,7 +979,36 @@ static inline int pmdp_test_and_clear_young(struct vm_area_struct *vma,
 
 #define __HAVE_ARCH_PTEP_GET_AND_CLEAR
 static inline pte_t ptep_get_and_clear(struct mm_struct *mm,
-				       unsigned long address, pte_t *ptep);
+				       unsigned long address, pte_t *ptep)
+{
+	int i;
+	long offset;
+	struct page *page_pte;
+	pte_t pteval;
+	pteval = __pte(xchg_relaxed(&pte_val(*ptep), 0));
+	if (!mm->repl_pgd_enabled) {
+		return pteval;
+	}
+	page_pte = page_of_ptable_entry(ptep);
+	check_page(page_pte);
+
+	if (unlikely(page_pte->replica == NULL)) {
+		return pteval;
+	}
+
+	offset = ((long)ptep & ~PAGE_MASK);
+	check_offset(offset);
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page_pte = page_pte->replica;
+		check_page_node(page_pte, i);
+
+		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+
+		xchg_relaxed(&pte_val(*ptep), 0);
+	}
+	return pteval;
+}
 
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 #define __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR
@@ -958,7 +1043,34 @@ static inline void native_ptep_set_wrprotect(struct mm_struct *mm, unsigned long
 	} while (pte_val(pte) != pte_val(old_pte));
 }
 
-static inline void ptep_set_wrprotect(struct mm_struct *mm, unsigned long address, pte_t *ptep);
+static inline void ptep_set_wrprotect(struct mm_struct *mm, unsigned long address, pte_t *ptep)
+{
+	int i;
+	long offset;
+	struct page *page_pte;
+	native_ptep_set_wrprotect(mm, address, ptep);
+	if (!mm->repl_pgd_enabled) {
+		return ;
+	}
+	page_pte = page_of_ptable_entry(ptep);
+	check_page(page_pte);
+
+	if (unlikely(page_pte->replica == NULL)) {
+		return ;
+	}
+
+	offset = ((long)ptep & ~PAGE_MASK);
+	check_offset(offset);
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page_pte = page_pte->replica;
+		check_page_node(page_pte, i);
+
+		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+
+		native_ptep_set_wrprotect(mm, address, ptep);
+	}	
+}
 
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 #define __HAVE_ARCH_PMDP_SET_WRPROTECT
