@@ -863,6 +863,203 @@ static inline int pgd_devmap(pgd_t pgd)
 }
 #endif
 
+
+
+#ifdef CONFIG_PGTABLE_REPLICATION
+
+/*
+ * Atomic pte/pmd modifications.
+ */
+#define __HAVE_ARCH_PTEP_TEST_AND_CLEAR_YOUNG
+static inline int __ptep_test_and_clear_young(pte_t *ptep)
+{
+	pte_t old_pte, pte;
+
+	pte = READ_ONCE(*ptep);
+	do {
+		old_pte = pte;
+		pte = pte_mkold(pte);
+		pte_val(pte) = cmpxchg_relaxed(&pte_val(*ptep),
+					       pte_val(old_pte), pte_val(pte));
+	} while (pte_val(pte) != pte_val(old_pte));
+
+	return pte_young(pte);
+}
+
+static inline int ptep_test_and_clear_young(struct vm_area_struct *vma,
+					    unsigned long address,
+					    pte_t *ptep)
+{
+	int i;
+	long offset;
+	struct page *page;
+	int ret = 0;
+	ret = __ptep_test_and_clear_young(ptep);
+
+	page = page_of_ptable_entry(ptep);
+	check_page(page);
+	//通过链表页的存在来判断当前的mm是否支持页表复制
+	if (page->replica == NULL) {
+		return ret;
+	}
+	offset = ((long)ptep & ~PAGE_MASK);
+	check_offset(offset);
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page = page->replica;
+		check_page_node(page, i);
+
+		ptep = (pte_t *)((long)page_to_virt(page) + offset);
+		__ptep_test_and_clear_young(ptep);
+	}
+
+	return ret;
+}
+
+#define __HAVE_ARCH_PTEP_CLEAR_YOUNG_FLUSH
+static inline int ptep_clear_flush_young(struct vm_area_struct *vma,
+					 unsigned long address, pte_t *ptep)
+{
+	int young = ptep_test_and_clear_young(vma, address, ptep);
+
+	if (young) {
+		/*
+		 * We can elide the trailing DSB here since the worst that can
+		 * happen is that a CPU continues to use the young entry in its
+		 * TLB and we mistakenly reclaim the associated page. The
+		 * window for such an event is bounded by the next
+		 * context-switch, which provides a DSB to complete the TLB
+		 * invalidation.
+		 */
+		flush_tlb_page_nosync(vma, address);
+	}
+
+	return young;
+}
+
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#define __HAVE_ARCH_PMDP_TEST_AND_CLEAR_YOUNG
+static inline int pmdp_test_and_clear_young(struct vm_area_struct *vma,
+					    unsigned long address,
+					    pmd_t *pmdp)
+{
+	return ptep_test_and_clear_young(vma, address, (pte_t *)pmdp);
+}
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+
+#define __HAVE_ARCH_PTEP_GET_AND_CLEAR
+static inline pte_t ptep_get_and_clear(struct mm_struct *mm,
+				       unsigned long address, pte_t *ptep)
+{
+	int i;
+	long offset;
+	struct page *page_pte;
+	pte_t pteval;
+	pteval = __pte(xchg_relaxed(&pte_val(*ptep), 0));
+	if (!mm->repl_pgd_enabled) {
+		return pteval;
+	}
+	page_pte = page_of_ptable_entry(ptep);
+	check_page(page_pte);
+
+	if (unlikely(page_pte->replica == NULL)) {
+		return pteval;
+	}
+
+	offset = ((long)ptep & ~PAGE_MASK);
+	check_offset(offset);
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page_pte = page_pte->replica;
+		check_page_node(page_pte, i);
+
+		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+
+		xchg_relaxed(&pte_val(*ptep), 0);
+	}
+	return pteval;
+}
+
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#define __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR
+static inline pmd_t pmdp_huge_get_and_clear(struct mm_struct *mm,
+					    unsigned long address, pmd_t *pmdp)
+{
+	return pte_pmd(ptep_get_and_clear(mm, address, (pte_t *)pmdp));
+}
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+
+/*
+ * ptep_set_wrprotect - mark read-only while trasferring potential hardware
+ * dirty status (PTE_DBM && !PTE_RDONLY) to the software PTE_DIRTY bit.
+ */
+#define __HAVE_ARCH_PTEP_SET_WRPROTECT
+static inline void native_ptep_set_wrprotect(struct mm_struct *mm, unsigned long address, pte_t *ptep)
+{
+	pte_t old_pte, pte;
+
+	pte = READ_ONCE(*ptep);
+	do {
+		old_pte = pte;
+		/*
+		 * If hardware-dirty (PTE_WRITE/DBM bit set and PTE_RDONLY
+		 * clear), set the PTE_DIRTY bit.
+		 */
+		if (pte_hw_dirty(pte))
+			pte = pte_mkdirty(pte);
+		pte = pte_wrprotect(pte);
+		pte_val(pte) = cmpxchg_relaxed(&pte_val(*ptep),
+					       pte_val(old_pte), pte_val(pte));
+	} while (pte_val(pte) != pte_val(old_pte));
+}
+
+static inline void ptep_set_wrprotect(struct mm_struct *mm, unsigned long address, pte_t *ptep)
+{
+	int i;
+	long offset;
+	struct page *page_pte;
+	native_ptep_set_wrprotect(mm, address, ptep);
+	if (!mm->repl_pgd_enabled) {
+		return ;
+	}
+	page_pte = page_of_ptable_entry(ptep);
+	check_page(page_pte);
+
+	if (unlikely(page_pte->replica == NULL)) {
+		return ;
+	}
+
+	offset = ((long)ptep & ~PAGE_MASK);
+	check_offset(offset);
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page_pte = page_pte->replica;
+		check_page_node(page_pte, i);
+
+		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+
+		native_ptep_set_wrprotect(mm, address, ptep);
+	}	
+}
+
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#define __HAVE_ARCH_PMDP_SET_WRPROTECT
+static inline void pmdp_set_wrprotect(struct mm_struct *mm,
+				      unsigned long address, pmd_t *pmdp)
+{
+	ptep_set_wrprotect(mm, address, (pte_t *)pmdp);
+}
+
+#define pmdp_establish pmdp_establish
+static inline pmd_t pmdp_establish(struct vm_area_struct *vma,
+		unsigned long address, pmd_t *pmdp, pmd_t pmd)
+{
+	return __pmd(xchg_relaxed(&pmd_val(*pmdp), pmd_val(pmd)));
+}
+#endif
+
+#else
+
 /*
  * Atomic pte/pmd modifications.
  */
@@ -926,7 +1123,6 @@ static inline pte_t ptep_get_and_clear(struct mm_struct *mm,
 {
 	return __pte(xchg_relaxed(&pte_val(*ptep), 0));
 }
-
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 #define __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR
 static inline pmd_t pmdp_huge_get_and_clear(struct mm_struct *mm,
@@ -975,6 +1171,13 @@ static inline pmd_t pmdp_establish(struct vm_area_struct *vma,
 	return __pmd(xchg_relaxed(&pmd_val(*pmdp), pmd_val(pmd)));
 }
 #endif
+
+#endif
+
+
+
+
+
 
 /*
  * Encode and decode a swap entry:

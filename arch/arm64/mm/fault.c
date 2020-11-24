@@ -173,6 +173,70 @@ static void show_pte(unsigned long addr)
 	pr_cont("\n");
 }
 
+#ifdef CONFIG_PGTABLE_REPLICATION
+
+int native_ptep_set_access_flags(struct vm_area_struct *vma,
+			  unsigned long address, pte_t *ptep,
+			  pte_t entry, int dirty)
+{
+	pteval_t old_pteval, pteval;
+	pte_t pte = READ_ONCE(*ptep);
+
+	if (pte_same(pte, entry))
+		return 0;
+
+	/* only preserve the access flags and write permission */
+	pte_val(entry) &= PTE_RDONLY | PTE_AF | PTE_WRITE | PTE_DIRTY;
+
+	/*
+	 * Setting the flags must be done atomically to avoid racing with the
+	 * hardware update of the access/dirty state. The PTE_RDONLY bit must
+	 * be set to the most permissive (lowest value) of *ptep and entry
+	 * (calculated as: a & b == ~(~a | ~b)).
+	 */
+	pte_val(entry) ^= PTE_RDONLY;
+	pteval = pte_val(pte);
+	do {
+		old_pteval = pteval;
+		pteval ^= PTE_RDONLY;
+		pteval |= pte_val(entry);
+		pteval ^= PTE_RDONLY;
+		pteval = cmpxchg_relaxed(&pte_val(*ptep), old_pteval, pteval);
+	} while (pteval != old_pteval);
+
+	flush_tlb_fix_spurious_fault(vma, address);
+	return 1;
+}
+
+int ptep_set_access_flags(struct vm_area_struct *vma,
+			  unsigned long address, pte_t *ptep,
+			  pte_t entry, int dirty)
+{
+	int i;
+	int changed;
+	long offset;
+	struct page *page;
+	changed = native_ptep_set_access_flags(vma,address, ptep,entry, dirty);
+	page = page_of_ptable_entry(ptep);
+	check_page(page);
+	if (page->replica == NULL) {
+		return changed;
+	}
+
+	offset = ((long)ptep & ~PAGE_MASK);
+	check_offset(offset);
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page = page->replica;
+		check_page_node(page, i);
+
+		ptep = (pte_t *)((long)page_to_virt(page) + offset);
+
+		native_ptep_set_access_flags(vma,address, ptep,entry, dirty);
+	}
+	return changed;
+}
+#else
 /*
  * This function sets the access flags (dirty, accessed), as well as write
  * permission, and only to a more permissive setting.
@@ -215,6 +279,7 @@ int ptep_set_access_flags(struct vm_area_struct *vma,
 	flush_tlb_fix_spurious_fault(vma, address);
 	return 1;
 }
+#endif
 
 static bool is_el1_instruction_abort(unsigned int esr)
 {
