@@ -169,6 +169,100 @@ struct page *page_of_ptable_entry(void *pgtableep)
 	return virt_to_page((long)pgtableep);
 }
 
+
+
+
+
+static inline int ptep_test_and_clear_young(struct vm_area_struct *vma,
+					    unsigned long address,
+					    pte_t *ptep)
+{
+	int i;
+	long offset;
+	struct page *page;
+	int ret = 0;
+	ret = __ptep_test_and_clear_young(ptep);
+
+	page = page_of_ptable_entry(ptep);
+	check_page(page);
+	//通过链表页的存在来判断当前的mm是否支持页表复制
+	if (page->replica == NULL) {
+		return ret;
+	}
+	offset = ((long)ptep & ~PAGE_MASK);
+	check_offset(offset);
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page = page->replica;
+		check_page_node(page, i);
+
+		ptep = (pte_t *)((long)page_to_virt(page) + offset);
+		__ptep_test_and_clear_young(ptep);
+	}
+
+	return ret;
+}
+
+static inline pte_t ptep_get_and_clear(struct mm_struct *mm,
+				       unsigned long address, pte_t *ptep)
+{
+	int i;
+	long offset;
+	struct page *page_pte;
+	pte_t pteval;
+	pteval = __pte(xchg_relaxed(&pte_val(*ptep), 0));
+	if (!mm->repl_pgd_enabled) {
+		return pteval;
+	}
+	page_pte = page_of_ptable_entry(ptep);
+	check_page(page_pte);
+
+	if (unlikely(page_pte->replica == NULL)) {
+		return pteval;
+	}
+
+	offset = ((long)ptep & ~PAGE_MASK);
+	check_offset(offset);
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page_pte = page_pte->replica;
+		check_page_node(page_pte, i);
+
+		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+
+		xchg_relaxed(&pte_val(*ptep), 0);
+	}
+	return pteval;
+}
+
+static inline void ptep_set_wrprotect(struct mm_struct *mm, unsigned long address, pte_t *ptep)
+{
+	int i;
+	long offset;
+	struct page *page_pte;
+	native_ptep_set_wrprotect(mm, address, ptep);
+	if (!mm->repl_pgd_enabled) {
+		return ;
+	}
+	page_pte = page_of_ptable_entry(ptep);
+	check_page(page_pte);
+
+	if (unlikely(page_pte->replica == NULL)) {
+		return ;
+	}
+
+	offset = ((long)ptep & ~PAGE_MASK);
+	check_offset(offset);
+
+	for (i = 0; i < nr_node_ids; i++) {
+		page_pte = page_pte->replica;
+		check_page_node(page_pte, i);
+
+		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+
+		native_ptep_set_wrprotect(mm, address, ptep);
+	}	
+}
 /*
  * ===============================================================================
  * Allocation and Freeing of Page Tables

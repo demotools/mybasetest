@@ -218,17 +218,17 @@ int ptep_set_access_flags(struct vm_area_struct *vma,
 	struct page *page;
 	changed = native_ptep_set_access_flags(vma,address, ptep,entry, dirty);
 	page = page_of_ptable_entry(ptep);
-	check_page(page);
+	// check_page(page);
 	if (page->replica == NULL) {
 		return changed;
 	}
 
 	offset = ((long)ptep & ~PAGE_MASK);
-	check_offset(offset);
+	// check_offset(offset);
 
 	for (i = 0; i < nr_node_ids; i++) {
 		page = page->replica;
-		check_page_node(page, i);
+		// check_page_node(page, i);
 
 		ptep = (pte_t *)((long)page_to_virt(page) + offset);
 
