@@ -899,7 +899,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	if (!page_pud || pgd_none(pgdval) || !pgd_present(pgdval)) {
 		printk("PTREP: set_pgd  origin pgd=%lx  and pgdval=%lx\n",(long)pgdp, (long)pgd_val(pgdval));
 		printk("PTREP: Called pgtable_repl_set_pgd  !page_pud \n");
-		BUG_ON(1);
+		// BUG_ON(1);
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pgd = page_pgd->replica;
 			check_page_node(page_pgd, i);
