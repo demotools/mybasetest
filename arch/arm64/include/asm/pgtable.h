@@ -42,7 +42,7 @@
  * ==================================================================
  */
 
- #define DEBUG_PGTABLE_REPLICATION
+//  #define DEBUG_PGTABLE_REPLICATION
 #ifdef DEBUG_PGTABLE_REPLICATION
 // #include <linux/mmzone.h>
 #define check_page(p) \
