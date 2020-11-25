@@ -25,7 +25,7 @@ pgd_t *pgd_alloc(struct mm_struct *mm)
 	{
 		pgd_t * pgd = (pgd_t *)__get_free_page(gfp);
 		mm->pgd = pgd;
-		printk("[mitosis-origin] pgd_alloc for mm=%lx and mm->pgd =%lx.\n",(long)mm,(long)mm->pgd);
+		// printk("[mitosis-origin] pgd_alloc for mm=%lx and mm->pgd =%lx.\n",(long)mm,(long)mm->pgd);
 		/* this will replicate the pgd */
 		pgtable_repl_pgd_alloc(mm);
 		return pgd;
@@ -38,7 +38,7 @@ void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 {
 	if (PGD_SIZE == PAGE_SIZE)
 	{
-		printk("[mitosis-origin] pgd_free for mm=%lx and pgd =%lx and mm->pgd=%lx.\n",(long)mm,(long)pgd,(long)mm->pgd);
+		// printk("[mitosis-origin] pgd_free for mm=%lx and pgd =%lx and mm->pgd=%lx.\n",(long)mm,(long)pgd,(long)mm->pgd);
 		pgtable_repl_pgd_free(mm, pgd);
 		free_page((unsigned long)pgd);
 	}
@@ -191,7 +191,7 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 	if (mm->repl_pgd_enabled == false ) {
 		return 0;
 	}
-	printk("------PTREPL: alloc pgd start------\n");
+	printk("[mitosis]------PTREPL: alloc pgd start------\n");
 	printk("[mitosis] nr_node_ids=%d.\n",nr_node_ids);
 	printk("[mitosis] pgd_alloc origin mm->pgd =%lx.\n",(long)mm->pgd);
 	// replication is enabled for this domain
@@ -261,7 +261,7 @@ void pgtable_repl_pgd_free(struct mm_struct *mm, pgd_t *pgd)
 		}
 		return;
 	}
-	printk("------PTREPL: free pgd start------\n");
+	printk("[mitosis] PTREPL: free pgd start \n");
 	printk("[mitosis] pgtable_repl_pgd_free freed pgd=%lx and mm->pgd=%lx.\n",(long)pgd,(long)mm->pgd);
 	pgd_page = pgd_page->replica;
 	// BUG_ON(1);
@@ -284,7 +284,7 @@ void pgtable_repl_pgd_free(struct mm_struct *mm, pgd_t *pgd)
 	}
 	pgd_page = page_of_ptable_entry(mm->pgd);
 	pgd_page->replica = NULL;
-	printk("------PTREPL: free pgd done------\n");
+	printk("[mitosis]------PTREPL: free pgd done------\n");
 }
 
 static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long pfn)
