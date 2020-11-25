@@ -1631,8 +1631,10 @@ static long kernel_set_pgtlbreplpolicy(int mode, const unsigned long __user *nma
 	int err;
 	struct mm_struct *mm = current->mm;
 	nodemask_t nodes;
-	BUG_ON(1);
+	// BUG_ON(1);
+	printk("[mitosis] kernel_set_pgtlbreplpolicy: mode = %d\n",mode);
 	if (mode) {
+		printk("[mitosis] NOTE: mode == 1\n");
 		err = get_nodes(&nodes, nmask, maxnode);
 		if (err)
 			return err;
@@ -1648,7 +1650,7 @@ static long kernel_set_pgtlbreplpolicy(int mode, const unsigned long __user *nma
 
 			return 0;
 		}
-
+		printk("[mitosis] NOTE: pgtable replication start to check...\n");
 		/* replication is disabled */
 		if (nodes_empty(mm->repl_pgd_nodes)) {
 			/* prepare replication */
