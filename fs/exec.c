@@ -1081,11 +1081,19 @@ static int exec_mmap(struct mm_struct *mm)
 	tsk->mm->vmacache_seqnum = 0;
 	vmacache_flush(tsk);
 	task_unlock(tsk);
+	if (tsk->mm->repl_pgd_enabled)
+	{
+		printk("[mitosis] exec_mmap: tsk->mm->repl_pgd_enabled = true \n");
+	}else
+	{
+		printk("[mitosis] exec_mmap: tsk->mm->repl_pgd_enabled = false \n");
+	}
 	if (old_mm) {
 		up_read(&old_mm->mmap_sem);
 		BUG_ON(active_mm != old_mm);
 		setmax_mm_hiwater_rss(&tsk->signal->maxrss, old_mm);
 		mm_update_next_owner(old_mm);
+		printk("[mitosis] exec_mmap: got here\n");
 		mmput(old_mm);
 		return 0;
 	}
@@ -1755,6 +1763,7 @@ static int exec_binprm(struct linux_binprm *bprm)
 	int ret;
 
 	/* Need to fetch pid before load_binary changes it */
+	printk("[mitosis] exec_binprm: pid = %d\n",current->pid);
 	old_pid = current->pid;
 	rcu_read_lock();
 	old_vpid = task_pid_nr_ns(current, task_active_pid_ns(current->parent));
@@ -1854,6 +1863,14 @@ static int __do_execve_file(int fd, struct filename *filename,
 	bprm->interp = bprm->filename;
 
 	retval = bprm_mm_init(bprm);
+	if (bprm->mm->repl_pgd_enabled)
+	{
+		printk("[mitosis] __do_execve_file: bprm->mm->repl_pgd_enabled = true \n");
+	}else
+	{
+		printk("[mitosis] __do_execve_file: bprm->mm->repl_pgd_enabled = false \n");
+	}
+	
 	if (retval)
 		goto out_unmark;
 
