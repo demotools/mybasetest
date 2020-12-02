@@ -1034,7 +1034,14 @@ static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p,
 	mm->pmd_huge_pte = NULL;
 #endif
 	mm_init_uprobes_state(mm);
-
+	pr_alert("BUG: haha  ok ok \n");
+	printk(KERN_ALERT"BUG: haha  ok ok \n");
+	printk(KERN_EMERG"BUG: haha  ok ok KERN_EMERG \n");
+	if (p->mm->repl_pgd_enabled)
+	{
+		BUG_ON(1);
+		while (1);
+	}
 	if (current->mm) {
 		mm->flags = current->mm->flags & MMF_INIT_MASK;
 		mm->def_flags = current->mm->def_flags & VM_INIT_DEF_MASK;
