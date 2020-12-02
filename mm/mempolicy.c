@@ -1650,7 +1650,7 @@ static long kernel_set_pgtlbreplpolicy(int mode, const unsigned long __user *nma
 
 			return 0;
 		}
-		printk("[mitosis] NOTE: version = 3\n");
+		printk("[mitosis] NOTE: version = 4\n");
 		printk("[mitosis] NOTE: pgtable replication start to check...\n");
 		/* replication is disabled */
 		if (nodes_empty(mm->repl_pgd_nodes)) {
