@@ -1034,31 +1034,27 @@ static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p,
 	mm->pmd_huge_pte = NULL;
 #endif
 	mm_init_uprobes_state(mm);
-	pr_alert("BUG: haha  ok ok \n");
-	printk(KERN_ALERT"BUG: haha  ok ok \n");
-	printk(KERN_EMERG"BUG: haha  ok ok KERN_EMERG \n");
-	printk("BUG: haha  ok ok \n");
+	
 	if (p->mm->repl_pgd_enabled)
 	{
-		BUG_ON(1);
-		while (1);
+		pr_alert("BUG: p->mm->repl_pgd_enabled alert\n");
+		printk(KERN_ALERT"BUG: p->mm->repl_pgd_enabled KERN_ALERT\n");
+		printk(KERN_EMERG"BUG: p->mm->repl_pgd_enabled KERN_EMERG \n");
+		printk("BUG: p->mm->repl_pgd_enabled ok \n");
 	}
 	if (current->mm) {
 		mm->flags = current->mm->flags & MMF_INIT_MASK;
 		mm->def_flags = current->mm->def_flags & VM_INIT_DEF_MASK;
 		#ifdef CONFIG_PGTABLE_REPLICATION
 		mm->repl_pgd_enabled = current->mm->repl_pgd_enabled;
-		if (current->mm->repl_pgd_enabled)
+		if (mm->repl_pgd_enabled)
 		{
-			BUG_ON(1);
-			pr_alert("BUG: haha  ok ok \n");
-			printk("BUG: haha  ok ok \n");
+			
+			pr_alert("BUG: mm->repl_pgd_enabled alert\n");
+			printk(KERN_ALERT"BUG: mm->repl_pgd_enabled KERN_ALERT\n");
+			printk(KERN_EMERG"BUG: mm->repl_pgd_enabled KERN_EMERG \n");
+			printk("BUG: mm->repl_pgd_enabled ok \n");
 				
-		}
-		if (p->mm->repl_pgd_enabled)
-		{
-			BUG_ON(1);
-			while (1);
 		}
 		#endif
 	} else {
