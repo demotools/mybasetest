@@ -1082,19 +1082,19 @@ static int exec_mmap(struct mm_struct *mm)
 	vmacache_flush(tsk);
 	task_unlock(tsk);
 	
-	if (tsk->mm->repl_pgd_enabled)
-	{
-		printk("[mitosis] exec_mmap: tsk->mm->repl_pgd_enabled = true \n");
-	}else
-	{
-		printk("[mitosis] exec_mmap: tsk->mm->repl_pgd_enabled = false \n");
-	}
+	// if (tsk->mm->repl_pgd_enabled)
+	// {
+	// 	printk("[mitosis] exec_mmap: tsk->mm->repl_pgd_enabled = true \n");
+	// }else
+	// {
+	// 	printk("[mitosis] exec_mmap: tsk->mm->repl_pgd_enabled = false \n");
+	// }
 	if (old_mm) {
 		up_read(&old_mm->mmap_sem);
 		BUG_ON(active_mm != old_mm);
 		setmax_mm_hiwater_rss(&tsk->signal->maxrss, old_mm);
 		mm_update_next_owner(old_mm);
-		printk("[mitosis] exec_mmap: got here\n");
+		// printk("[mitosis] exec_mmap: got here\n");
 		// BUG_ON(old_mm->repl_pgd_enabled);
 		mmput(old_mm);
 		return 0;
@@ -1863,33 +1863,33 @@ static int __do_execve_file(int fd, struct filename *filename,
 	}
 	bprm->interp = bprm->filename;
 
-	if (current->mm->repl_pgd_enabled)
-	{
-		printk("[mitosis] k__do_execve_file: current->mm->repl_pgd_enabled = true \n");
-		// pr_warn_once("[mitosis] __do_execve_file: current->mm->repl_pgd_enabled = true \n");
+	// if (current->mm->repl_pgd_enabled)
+	// {
+	// 	printk("[mitosis] k__do_execve_file: current->mm->repl_pgd_enabled = true \n");
+	// 	// pr_warn_once("[mitosis] __do_execve_file: current->mm->repl_pgd_enabled = true \n");
 		
 		
-	}else
-	{
-		printk("[mitosis] k__do_execve_file: current->mm->repl_pgd_enabled = no \n");
-		// pr_warn_once("[mitosis] __do_execve_file: current->mm->repl_pgd_enabled = no \n");
-	}
+	// }else
+	// {
+	// 	printk("[mitosis] k__do_execve_file: current->mm->repl_pgd_enabled = no \n");
+	// 	// pr_warn_once("[mitosis] __do_execve_file: current->mm->repl_pgd_enabled = no \n");
+	// }
 	
 
 	retval = bprm_mm_init(bprm);
-	if (bprm->mm->repl_pgd_enabled)
-	{
-		// WARN_ON(1);
-		// BUG_ON(1);
-		// goto out;
-		// return retval;
-		printk("[mitosis] k__do_execve_file: bprm->mm->repl_pgd_enabled = true \n");
-		// pr_warn_once("[mitosis] __do_execve_file: bprm->mm->repl_pgd_enabled = true \n");
-	}else
-	{
-		printk("[mitosis] k__do_execve_file: bprm->mm->repl_pgd_enabled = no \n");
-		// pr_warn_once("[mitosis] __do_execve_file: bprm->mm->repl_pgd_enabled = no \n");
-	}
+	// if (bprm->mm->repl_pgd_enabled)
+	// {
+	// 	// WARN_ON(1);
+	// 	// BUG_ON(1);
+	// 	// goto out;
+	// 	// return retval;
+	// 	printk("[mitosis] k__do_execve_file: bprm->mm->repl_pgd_enabled = true \n");
+	// 	// pr_warn_once("[mitosis] __do_execve_file: bprm->mm->repl_pgd_enabled = true \n");
+	// }else
+	// {
+	// 	printk("[mitosis] k__do_execve_file: bprm->mm->repl_pgd_enabled = no \n");
+	// 	// pr_warn_once("[mitosis] __do_execve_file: bprm->mm->repl_pgd_enabled = no \n");
+	// }
 	
 	
 	
