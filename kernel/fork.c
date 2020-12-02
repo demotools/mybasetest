@@ -1040,6 +1040,15 @@ static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p,
 		mm->def_flags = current->mm->def_flags & VM_INIT_DEF_MASK;
 		#ifdef CONFIG_PGTABLE_REPLICATION
 		mm->repl_pgd_enabled = current->mm->repl_pgd_enabled;
+		if (current->mm->repl_pgd_enabled)
+		{
+			pr_alert("BUG: haha  ok ok \n");
+			printk("BUG: haha  ok ok \n");
+			if (mm->repl_pgd_enabled)
+			{
+				BUG_ON(1);
+			}	
+		}
 		#endif
 	} else {
 		mm->flags = default_dump_filter;

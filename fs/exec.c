@@ -1084,17 +1084,17 @@ static int exec_mmap(struct mm_struct *mm)
 	BUG_ON(1);
 	if (tsk->mm->repl_pgd_enabled)
 	{
-		printk(KERN_ALERT"[mitosis] exec_mmap: tsk->mm->repl_pgd_enabled = true \n");
+		pr_warn_once("[mitosis] exec_mmap: tsk->mm->repl_pgd_enabled = true \n");
 	}else
 	{
-		printk(KERN_ALERT"[mitosis] exec_mmap: tsk->mm->repl_pgd_enabled = false \n");
+		pr_warn_once("[mitosis] exec_mmap: tsk->mm->repl_pgd_enabled = false \n");
 	}
 	if (old_mm) {
 		up_read(&old_mm->mmap_sem);
 		BUG_ON(active_mm != old_mm);
 		setmax_mm_hiwater_rss(&tsk->signal->maxrss, old_mm);
 		mm_update_next_owner(old_mm);
-		printk(KERN_ALERT"[mitosis] exec_mmap: got here\n");
+		pr_warn_once("[mitosis] exec_mmap: got here\n");
 		BUG_ON(old_mm->repl_pgd_enabled);
 		mmput(old_mm);
 		return 0;

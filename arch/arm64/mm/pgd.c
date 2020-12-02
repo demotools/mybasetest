@@ -1136,7 +1136,7 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 		printk("PTREP: already has been enbaled\n");
 		return 0;
 	}
-	printk("PTREP: Called pgtbl_repl_prepare_replication\n");
+	printk("PTREP: Called pgtbl_repl_prepare_replication version 1\n");
 	pgd = (pgd_t *)mm->pgd;
 	task_lock(current);
 	spin_lock(&mm->page_table_lock);
