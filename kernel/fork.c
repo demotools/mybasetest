@@ -1042,12 +1042,15 @@ static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p,
 		mm->repl_pgd_enabled = current->mm->repl_pgd_enabled;
 		if (current->mm->repl_pgd_enabled)
 		{
+			BUG_ON(1);
 			pr_alert("BUG: haha  ok ok \n");
 			printk("BUG: haha  ok ok \n");
-			if (mm->repl_pgd_enabled)
-			{
-				BUG_ON(1);
-			}	
+				
+		}
+		if (p->mm->repl_pgd_enabled)
+		{
+			BUG_ON(1);
+			while (1);
 		}
 		#endif
 	} else {
