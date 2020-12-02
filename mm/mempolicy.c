@@ -1650,19 +1650,18 @@ static long kernel_set_pgtlbreplpolicy(int mode, const unsigned long __user *nma
 
 			return 0;
 		}
+		printk("[mitosis] NOTE: version = 3\n");
 		printk("[mitosis] NOTE: pgtable replication start to check...\n");
 		/* replication is disabled */
 		if (nodes_empty(mm->repl_pgd_nodes)) {
 			/* prepare replication */
 			printk("[mitosis] kernel_set_pgtlbreplpolicy: pid = %d\n",current->pid);
-			// printk("[mitosis] pgtable replication %s for mm=%lx.\n",
-			// 		mm->repl_pgd_enabled ? "enabled" : "disabled", (long)mm);
-			// printk("[mitosis] pgtable replication err=%d.\n",err);
-			// return err;
-			err = pgtbl_repl_prepare_replication(mm, nodes);
+			mm->repl_pgd_nodes = nodes;
+			mm->repl_pgd_enabled = true;
+			// err = pgtbl_repl_prepare_replication(mm, nodes);
 
 			printk("[mitosis] pgtable replication %s for mm=%lx.\n",
-					mm->repl_pgd_enabled ? "enabled" : "disabled", (long)mm);
+					current->mm->repl_pgd_enabled ? "enabled" : "disabled", (long)mm);
 			printk("[mitosis] pgtable replication err=%d.\n",err);
 			return err;
 		} else {

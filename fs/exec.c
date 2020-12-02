@@ -1872,8 +1872,12 @@ static int __do_execve_file(int fd, struct filename *filename,
 	{
 		printk("[mitosis] __do_execve_file: current->mm->repl_pgd_enabled = no \n");
 		pr_warn_once("[mitosis] __do_execve_file: current->mm->repl_pgd_enabled = no \n");
+		goto out;
+		
 	}
+	while(1);
 	
+
 	retval = bprm_mm_init(bprm);
 	if (bprm->mm->repl_pgd_enabled)
 	{
