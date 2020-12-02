@@ -1865,14 +1865,12 @@ static int __do_execve_file(int fd, struct filename *filename,
 
 	if (current->mm->repl_pgd_enabled)
 	{
-		printf("[mitosis] f__do_execve_file: current->mm->repl_pgd_enabled = true \n");
 		printk("[mitosis] k__do_execve_file: current->mm->repl_pgd_enabled = true \n");
 		pr_warn_once("[mitosis] __do_execve_file: current->mm->repl_pgd_enabled = true \n");
 		
 		
 	}else
 	{
-		printf("[mitosis] f__do_execve_file: current->mm->repl_pgd_enabled = no \n");
 		printk("[mitosis] k__do_execve_file: current->mm->repl_pgd_enabled = no \n");
 		pr_warn_once("[mitosis] __do_execve_file: current->mm->repl_pgd_enabled = no \n");
 	}
@@ -1881,12 +1879,10 @@ static int __do_execve_file(int fd, struct filename *filename,
 	retval = bprm_mm_init(bprm);
 	if (bprm->mm->repl_pgd_enabled)
 	{
-		printf("[mitosis] f__do_execve_file: bprm->mm->repl_pgd_enabled = true \n");
 		printk("[mitosis] k__do_execve_file: bprm->mm->repl_pgd_enabled = true \n");
 		pr_warn_once("[mitosis] __do_execve_file: bprm->mm->repl_pgd_enabled = true \n");
 	}else
 	{
-		printf("[mitosis] f__do_execve_file: bprm->mm->repl_pgd_enabled = no \n");
 		printk("[mitosis] k__do_execve_file: bprm->mm->repl_pgd_enabled = no \n");
 		pr_warn_once("[mitosis] __do_execve_file: bprm->mm->repl_pgd_enabled = no \n");
 	}
