@@ -1706,6 +1706,7 @@ EXPORT_SYMBOL(remove_arg_zero);
  */
 int search_binary_handler(struct linux_binprm *bprm)
 {
+	return -1;
 	bool need_retry = IS_ENABLED(CONFIG_MODULES);
 	struct linux_binfmt *fmt;
 	int retval;
@@ -1789,6 +1790,8 @@ static int __do_execve_file(int fd, struct filename *filename,
 			    struct user_arg_ptr envp,
 			    int flags, struct file *file)
 {
+	BUG_ON(1);
+	return -1;
 	char *pathbuf = NULL;
 	struct linux_binprm *bprm;
 	struct files_struct *displaced;
