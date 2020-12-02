@@ -1037,6 +1037,7 @@ static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p,
 	pr_alert("BUG: haha  ok ok \n");
 	printk(KERN_ALERT"BUG: haha  ok ok \n");
 	printk(KERN_EMERG"BUG: haha  ok ok KERN_EMERG \n");
+	printk("BUG: haha  ok ok \n");
 	if (p->mm->repl_pgd_enabled)
 	{
 		BUG_ON(1);

@@ -775,7 +775,7 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 	if (!page_pte || pmd_none(pmdval) || !pmd_present(pmdval)) {
 		printk("PTREP: set_pmd  origin pmd=%lx  and pmdval=%lx\n",(long)pmdp, (long)pmd_val(pmdval));
 		printk("PTREP: Called pgtable_repl_set_pmd  !page_te \n");
-		BUG_ON(1);
+		// BUG_ON(1);
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pmd = page_pmd->replica;
 			check_page_node(page_pmd, i);
@@ -840,7 +840,7 @@ printk("------ 1 . page_pud->replica_node_id = %d------\n",page_pud->replica_nod
 	if (!page_pmd || !pud_present(pudval) || pud_none(pudval)) {
 		printk("PTREP: set_pud  origin pud=%lx  and pudval=%lx\n",(long)pudp, (long)pud_val(pudval));
 		printk("PTREP: Called pgtable_repl_set_pud  !page_pmd \n");
-		BUG_ON(1);
+		// BUG_ON(1);
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pud = page_pud->replica;
 			check_page_node(page_pud, i);
@@ -901,7 +901,7 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	if (!page_pud || pgd_none(pgdval) || !pgd_present(pgdval)) {
 		printk("PTREP: set_pgd  origin pgd=%lx  and pgdval=%lx\n",(long)pgdp, (long)pgd_val(pgdval));
 		printk("PTREP: Called pgtable_repl_set_pgd  !page_pud \n");
-		 BUG_ON(1);
+		//  BUG_ON(1);
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pgd = page_pgd->replica;
 			check_page_node(page_pgd, i);
