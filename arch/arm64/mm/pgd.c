@@ -662,11 +662,11 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 		return;
 	}
 	
-	printk("------PTREPL: set_pte start------\n");
+	// printk("------PTREPL: set_pte start------\n");
 	
 	offset = (long)ptep - (long)page_to_virt(page_pte);
 	check_offset(offset);
-	printk("------ 1 . page_pte->replica_node_id = %d------\n",page_pte->replica_node_id);
+	// printk("------ 1 . page_pte->replica_node_id = %d------\n",page_pte->replica_node_id);
 	while(page_pte->replica_node_id != -1)
 	{
 		page_tmp = page_pte->replica;
@@ -681,7 +681,7 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 		check_page_node(page_pte, i);
 
 		ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
-		printk("PTREP: set_pte offset=%lx and node0 origin pte=%lx  and pte+offset=%lx  and pteval=%lx\n",offset,(long)page_to_virt(page_pte), (long)ptep,(long)pte_val(pteval));
+		// printk("PTREP: set_pte offset=%lx and node0 origin pte=%lx  and pte+offset=%lx  and pteval=%lx\n",offset,(long)page_to_virt(page_pte), (long)ptep,(long)pte_val(pteval));
 		native_set_pte(ptep, pteval);
 	}
 	// printk("------PTREPL: set_pte done------\n");
