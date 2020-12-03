@@ -1284,13 +1284,6 @@ int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __u
 			pgtable_repl_activated = false;
 			pgtable_fixed_node = -1;
 			pgtable_fixed_nodemask = NODE_MASK_NONE;
-		} else if (state == -2) {
-			/* fixed on node 0 */
-			printk("Page table allocation set to normal behavior\n");
-			pgtable_repl_custom_activated = false;
-			pgtable_repl_activated = false;
-			pgtable_fixed_node = -1;
-			pgtable_fixed_nodemask = NODE_MASK_NONE;
 		} else if (state == 0) {
 			/* fixed on node 0 */
 			printk("Page table allocation set to fixed on node 0\n");
