@@ -327,7 +327,7 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 			goto cleanup;
 		}
 		
-		printk("[mitosis] __pgtable_repl_alloc_one origin pagep=%lx and new pagep = %lx\n",(long) page_to_virt(p),(long)page_to_virt(p2->replica));
+		// printk("[mitosis] __pgtable_repl_alloc_one origin pagep=%lx and new pagep = %lx\n",(long) page_to_virt(p),(long)page_to_virt(p2->replica));
 		check_page_node(p2->replica, i);
 
 		// if (ctor) {
@@ -438,7 +438,7 @@ static inline void __pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long 
 			goto cleanup;
 		}
 		
-		printk("[mitosis] __pgtable_repl_alloc_one origin pagep=%lx and new pagep = %lx\n",(long) page_to_virt(p),(long)page_to_virt(p2->replica));
+		// printk("[mitosis] __pgtable_repl_alloc_one origin pagep=%lx and new pagep = %lx\n",(long) page_to_virt(p),(long)page_to_virt(p2->replica));
 		check_page_node(p2->replica, i);
 
 		if (!pgtable_pmd_page_ctor(p2->replica)) {
@@ -453,7 +453,7 @@ static inline void __pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long 
 	p2->replica = p;
 
 	/* let's verify */
-	#if 1
+	#if 0
 	p2 = p->replica;
 	for (i = 0; i < nr_node_ids; i++) {
 		//printk("page: %lx", (long)p2);
@@ -534,7 +534,7 @@ static inline void __pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long 
 			goto cleanup;
 		}
 		
-		printk("[mitosis] __pgtable_repl_alloc_one origin pagep=%lx and new pagep = %lx\n",(long) page_to_virt(p),(long)page_to_virt(p2->replica));
+		// printk("[mitosis] __pgtable_repl_alloc_one origin pagep=%lx and new pagep = %lx\n",(long) page_to_virt(p),(long)page_to_virt(p2->replica));
 		check_page_node(p2->replica, i);
 
 		if (!pgtable_pte_page_ctor(p2->replica)) {
@@ -549,7 +549,7 @@ static inline void __pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long 
 	p2->replica = p;
 
 	/* let's verify */
-	#if 1
+	#if 0
 	p2 = p->replica;
 	for (i = 0; i < nr_node_ids; i++) {
 		//printk("page: %lx", (long)p2);
@@ -758,12 +758,12 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 	if (page_pmd->replica == NULL) {
 		return;
 	}
-	printk("------PTREPL: set_pmd start------\n");
+	// printk("------PTREPL: set_pmd start------\n");
 	page_pte = pmd_page(pmdval);
 
 	offset = ((long)pmdp & ~PAGE_MASK);
 	check_offset(offset);
-	printk("------ 1 . page_pmd->replica_node_id = %d------\n",page_pmd->replica_node_id);
+	// printk("------ 1 . page_pmd->replica_node_id = %d------\n",page_pmd->replica_node_id);
 	while(page_pmd->replica_node_id != -1)
 	{
 		page_tmp = page_pmd->replica;
@@ -797,10 +797,10 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 		pmdp = (pmd_t *)((long)page_to_virt(page_pmd) + offset);
 		pmdval = __pmd(__phys_to_pmd_val(page_to_phys(page_pte)) | PMD_TYPE_TABLE);
 		// pmdval = native_make_pmd((page_to_pfn(page_pte) << PAGE_SHIFT) | pmd_flags(pmdval));
-		printk("PTREP: set_pmd offset=%lx and node0 origin pmd=%lx  and pmd+offset=%lx  and pte=%lx and pmdval=%lx\n",offset,(long)page_to_virt(page_pmd), (long)pmdp, (long)page_to_virt(page_pte),(long)pmd_val(pmdval));
+		// printk("PTREP: set_pmd offset=%lx and node0 origin pmd=%lx  and pmd+offset=%lx  and pte=%lx and pmdval=%lx\n",offset,(long)page_to_virt(page_pmd), (long)pmdp, (long)page_to_virt(page_pte),(long)pmd_val(pmdval));
 		native_set_pmd(pmdp, pmdval);
 	}
-	printk("------PTREPL: set_pmd done------\n");
+	// printk("------PTREPL: set_pmd done------\n");
 }
 
 // static inline pud_t native_make_pud(pmdval_t val)
@@ -824,10 +824,10 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 	if (page_pud->replica == NULL) {
 		return;
 	}
-	printk("------PTREPL: set_pud start------\n");
+	// printk("------PTREPL: set_pud start------\n");
 	offset = ((long)pudp & ~PAGE_MASK);
 	check_offset(offset);
-printk("------ 1 . page_pud->replica_node_id = %d------\n",page_pud->replica_node_id);
+// printk("------ 1 . page_pud->replica_node_id = %d------\n",page_pud->replica_node_id);
 	page_pmd = pud_page(pudval);
 	while(page_pud->replica_node_id != -1)
 	{
@@ -862,10 +862,10 @@ printk("------ 1 . page_pud->replica_node_id = %d------\n",page_pud->replica_nod
 		pudp = (pud_t *)((long)page_to_virt(page_pud) + offset);
 		pudval = __pud(__phys_to_pud_val(page_to_phys(page_pmd)) | PMD_TYPE_TABLE);
 		// pudval = native_make_pud((page_to_pfn(page_pmd) << PAGE_SHIFT) | pud_flags(pudval));
-		printk("PTREP: set_pud offset=%lx and node0 origin pud=%lx  and pud+offset=%lx  and pmd=%lx and pudval=%lx\n",offset,(long)page_to_virt(page_pud), (long)pudp, (long)page_to_virt(page_pmd),(long)pud_val(pudval));
+		// printk("PTREP: set_pud offset=%lx and node0 origin pud=%lx  and pud+offset=%lx  and pmd=%lx and pudval=%lx\n",offset,(long)page_to_virt(page_pud), (long)pudp, (long)page_to_virt(page_pmd),(long)pud_val(pudval));
 		native_set_pud(pudp, pudval);
 	}
-	printk("------PTREPL: set_pud done------\n");
+	// printk("------PTREPL: set_pud done------\n");
 }
 
 void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
