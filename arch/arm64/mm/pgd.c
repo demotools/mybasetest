@@ -197,6 +197,7 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 	// replication is enabled for this domain
 	mm->repl_pgd_enabled = true;
 
+	// pfn_to_nid(virt_to_pfn(mm->pgd))
 	/* get the page of the previously allocated pgd */
 	pgd = page_of_ptable_entry(mm->pgd);
 	pgd->replica_node_id = -1;
@@ -773,8 +774,8 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 
 	/* the entry is a large entry i.e. pointing to a frame, or the entry is not valid */
 	if (!page_pte || pmd_none(pmdval) || !pmd_present(pmdval)) {
-		printk("PTREP: set_pmd  origin pmd=%lx  and pmdval=%lx\n",(long)pmdp, (long)pmd_val(pmdval));
-		printk("PTREP: Called pgtable_repl_set_pmd  !page_te \n");
+		// printk("PTREP: set_pmd  origin pmd=%lx  and pmdval=%lx\n",(long)pmdp, (long)pmd_val(pmdval));
+		// printk("PTREP: Called pgtable_repl_set_pmd  !page_te \n");
 		// BUG_ON(1);
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pmd = page_pmd->replica;
@@ -838,8 +839,8 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 
 	/* there is no age for this entry or the entry is huge or the entry is not present */
 	if (!page_pmd || !pud_present(pudval) || pud_none(pudval)) {
-		printk("PTREP: set_pud  origin pud=%lx  and pudval=%lx\n",(long)pudp, (long)pud_val(pudval));
-		printk("PTREP: Called pgtable_repl_set_pud  !page_pmd \n");
+		// printk("PTREP: set_pud  origin pud=%lx  and pudval=%lx\n",(long)pudp, (long)pud_val(pudval));
+		// printk("PTREP: Called pgtable_repl_set_pud  !page_pmd \n");
 		// BUG_ON(1);
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pud = page_pud->replica;
@@ -885,11 +886,11 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	if (page_pgd->replica == NULL) {
 		return;
 	}
-	printk("------PTREPL: set_pgd start------\n");
+	// printk("------PTREPL: set_pgd start------\n");
 	//取出pgdp 在pgd 中的偏移 offset
 	offset = ((long)pgdp & ~PAGE_MASK);
 	check_offset(offset);
-	printk("------ 1 . page_pgd->replica_node_id = %d------\n",page_pgd->replica_node_id);
+	// printk("------ 1 . page_pgd->replica_node_id = %d------\n",page_pgd->replica_node_id);
 	page_pud = pgd_page(pgdval);
 	while(page_pgd->replica_node_id != -1)
 	{
@@ -899,8 +900,8 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	}
 	//如果pud 的page 还没有被放入内存中，那么就直接把pgdval这个地址值设置到各节点的副本pgd表中。
 	if (!page_pud || pgd_none(pgdval) || !pgd_present(pgdval)) {
-		printk("PTREP: set_pgd  origin pgd=%lx  and pgdval=%lx\n",(long)pgdp, (long)pgd_val(pgdval));
-		printk("PTREP: Called pgtable_repl_set_pgd  !page_pud \n");
+		// printk("PTREP: set_pgd  origin pgd=%lx  and pgdval=%lx\n",(long)pgdp, (long)pgd_val(pgdval));
+		// printk("PTREP: Called pgtable_repl_set_pgd  !page_pud \n");
 		//  BUG_ON(1);
 		for (i = 0; i < nr_node_ids; i++) {
 			page_pgd = page_pgd->replica;
@@ -925,11 +926,11 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 		pgdval = __pgd(__phys_to_pgd_val(page_to_phys(page_pud)) | PUD_TYPE_TABLE);
 		
 		// pgdval = native_make_pgd((page_to_pfn(page_pud) << PAGE_SHIFT) | pgd_flags(pgdval));
-		printk("PTREP: set_pgd offset=%lx and node0 origin pgd=%lx  and pgd+offset=%lx  and pud=%lx and pdgval=%lx\n",offset,(long)page_to_virt(page_pgd), (long)pgdp, (long)page_to_virt(page_pud),(long)pgd_val(pgdval));
-		printk("PTREP: set_pgd  origin pgdval=%lx  and another func pgdval=%lx\n",(long)pgd_val(pgdval),(long)pgd_val(__pgd(__phys_to_pgd_val(virt_to_phys(page_to_virt(page_pud))) | PUD_TYPE_TABLE)));
+		// printk("PTREP: set_pgd offset=%lx and node0 origin pgd=%lx  and pgd+offset=%lx  and pud=%lx and pdgval=%lx\n",offset,(long)page_to_virt(page_pgd), (long)pgdp, (long)page_to_virt(page_pud),(long)pgd_val(pgdval));
+		// printk("PTREP: set_pgd  origin pgdval=%lx  and another func pgdval=%lx\n",(long)pgd_val(pgdval),(long)pgd_val(__pgd(__phys_to_pgd_val(virt_to_phys(page_to_virt(page_pud))) | PUD_TYPE_TABLE)));
 		native_set_pgd(pgdp, pgdval);
 	}
-	printk("------PTREPL: set_pgd done------\n");
+	// printk("------PTREPL: set_pgd done------\n");
 }
 
 // void pgtable_ptep_set_wrprotect(struct mm_struct *mm, unsigned long addr, pte_t *ptep)
