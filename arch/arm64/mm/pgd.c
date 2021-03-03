@@ -318,7 +318,7 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 		}
 		return;
 	}
-	printk("%s:%u pud alloc =%lx , node = %i\n", __FUNCTION__, __LINE__, (long)page_to_virt(p),pfn_to_nid(pfn));
+	// printk("%s:%u pud alloc =%lx , node = %i\n", __FUNCTION__, __LINE__, (long)page_to_virt(p),pfn_to_nid(pfn));
 	
 	p2 = p;
 	for (i = 0; i < nr_node_ids; i++) {
@@ -430,7 +430,7 @@ static inline void __pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long 
 		}
 		return;
 	}
-	printk("%s:%u pmd alloc =%lx , node = %i\n", __FUNCTION__, __LINE__, (long)page_to_virt(p),pfn_to_nid(pfn));
+	// printk("%s:%u pmd alloc =%lx , node = %i\n", __FUNCTION__, __LINE__, (long)page_to_virt(p),pfn_to_nid(pfn));
 	
 	p2 = p;
 	for (i = 0; i < nr_node_ids; i++) {
@@ -527,7 +527,7 @@ static inline void __pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long 
 		}
 		return;
 	}
-	printk("%s:%u pte alloc =%lx , node = %i\n", __FUNCTION__, __LINE__, (long)page_to_virt(p),pfn_to_nid(pfn));
+	// printk("%s:%u pte alloc =%lx , node = %i\n", __FUNCTION__, __LINE__, (long)page_to_virt(p),pfn_to_nid(pfn));
 	
 	p2 = p;
 	for (i = 0; i < nr_node_ids; i++) {
