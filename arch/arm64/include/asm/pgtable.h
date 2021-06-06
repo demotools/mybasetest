@@ -37,6 +37,7 @@
 
 #ifdef CONFIG_PGTABLE_REPLICATION
 
+#define	CONFIG_Migration_test  //迁移测试是打开，多线程测试时关闭
 /*
  * ==================================================================
  * Debug Macros
@@ -96,6 +97,8 @@ int pgtable_cache_populate(size_t numpgtables);
 int pgtable_cache_drain(void);
 int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes);
 
+struct page *pgtable_page_alloc(gfp_t gfp_mask,int node);
+unsigned long pgtable_page_alloc_2(gfp_t gfp_mask,int node);
 #endif
 
 extern struct page *vmemmap;

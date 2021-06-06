@@ -27,9 +27,17 @@ static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long addr)
 	if (mm == &init_mm)
 		gfp = GFP_PGTABLE_KERNEL;
 
-	page = alloc_page(gfp);
-	
+	// page = alloc_page(gfp);
 	#ifdef CONFIG_PGTABLE_REPLICATION
+
+	#ifdef CONFIG_Migration_test //迁移测试
+	page = pgtable_page_alloc(gfp,0);
+	#else
+	//正常测试
+	page = alloc_page(gfp);
+	#endif
+	
+	
 	page->replica_node_id = -1;
 	pgtable_repl_alloc_pmd(mm, page_to_pfn(page));
 	#endif
@@ -77,8 +85,14 @@ static inline pud_t *pud_alloc_one(struct mm_struct *mm, unsigned long addr)
 {
 	pud_t * pudp;
 	struct page *page;
-	pudp = (pud_t *)__get_free_page(GFP_PGTABLE_USER);
+	// pudp = (pud_t *)__get_free_page(GFP_PGTABLE_USER);
 	#ifdef CONFIG_PGTABLE_REPLICATION
+	#ifdef CONFIG_Migration_test //迁移测试
+	pudp = (pud_t *)pgtable_page_alloc_2(GFP_PGTABLE_USER,0);
+	#else
+	//正常测试
+	pudp = (pud_t *)__get_free_page(GFP_PGTABLE_USER);
+	#endif
 	page = page_of_ptable_entry(pudp);
 	page->replica_node_id = -1;
 	pgtable_repl_alloc_pud(mm, virt_to_pfn(pudp));

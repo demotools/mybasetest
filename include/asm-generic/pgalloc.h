@@ -61,7 +61,13 @@ static inline pgtable_t __pte_alloc_one(struct mm_struct *mm, gfp_t gfp)
 {
 	struct page *pte;
 
+	// pte = alloc_page(gfp);
+	#ifdef CONFIG_Migration_test //迁移测试
+	pte = pgtable_page_alloc(gfp,0);
+	#else
+	//正常测试
 	pte = alloc_page(gfp);
+	#endif
 	#ifdef CONFIG_PGTABLE_REPLICATION
 	pte->replica_node_id = -1;
 	pgtable_repl_alloc_pte(mm, virt_to_pfn(page_to_virt(pte)));

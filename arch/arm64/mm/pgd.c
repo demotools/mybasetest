@@ -23,7 +23,13 @@ pgd_t *pgd_alloc(struct mm_struct *mm)
 	gfp_t gfp = GFP_PGTABLE_USER;
 	if (PGD_SIZE == PAGE_SIZE)
 	{
+		#ifdef CONFIG_Migration_test //迁移测试
+		pgd_t * pgd = (pgd_t *)pgtable_page_alloc_2(gfp,0);
+		#else
+		//正常测试
 		pgd_t * pgd = (pgd_t *)__get_free_page(gfp);
+		#endif
+
 		mm->pgd = pgd;
 		// printk("[mitosis-origin] pgd_alloc for mm=%lx and mm->pgd =%lx.\n",(long)mm,(long)mm->pgd);
 		/* this will replicate the pgd */
@@ -110,6 +116,8 @@ static bool pgtable_repl_custom_activated = false;
 ///> where to allocate the page tables from
 int pgtable_fixed_node = -1;
 nodemask_t pgtable_fixed_nodemask = NODE_MASK_NONE;
+
+static bool migration_test = false;
 
 
 #define MAX_SUPPORTED_NODE 8
@@ -1097,6 +1105,48 @@ void pgtable_cache_free(int node, struct page *p)
 	spin_unlock(&pgtable_cache_lock);
 }
 
+struct page *pgtable_page_alloc(gfp_t gfp_mask,int node)
+{
+	if(migration_test)
+	{
+		struct page *p;
+		nodemask_t nm;
+
+		nm = NODE_MASK_NONE;
+		node_set(node, nm);
+		p = __alloc_pages_nodemask(gfp_mask, 0, node, &nm);
+		if (!p)
+		{
+			return 0;
+		}
+		return p;
+	}else
+	{
+		return alloc_page(gfp_mask);
+	}
+	// check_page_node(p, node);
+}
+unsigned long pgtable_page_alloc_2(gfp_t gfp_mask,int node)
+{
+	if(migration_test)
+	{
+		struct page *p;
+		nodemask_t nm;
+
+		nm = NODE_MASK_NONE;
+		node_set(node, nm);
+		p = __alloc_pages_nodemask(gfp_mask, 0, node, &nm);
+		if (!p)
+		{
+			return 0;
+		}
+		return (unsigned long)page_address(p);
+	}else
+	{
+		return (unsigned long)__get_free_page(gfp_mask);
+	}
+	// check_page_node(p, node);
+}
 /*
  * ==================================================================
  * Prepare Replication
@@ -1290,6 +1340,7 @@ int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __u
 			pgtable_fixed_nodemask = NODE_MASK_NONE;
 		} else if (state == 0) {
 			/* fixed on node 0 */
+			migration_test = true;
 			printk("Page table allocation set to fixed on node 0\n");
 			pgtable_repl_custom_activated = true;
 			pgtable_repl_activated = false;
