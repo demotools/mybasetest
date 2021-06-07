@@ -1109,12 +1109,17 @@ struct page *pgtable_page_alloc(gfp_t gfp_mask,int node)
 {
 	if(migration_test)
 	{
+		if (pgtable_fixed_node<0||pgtable_fixed_node>3)
+		{
+			printk("Mitosis migration node number wrong \n");
+			pgtable_fixed_node=0;
+		}
 		struct page *p;
 		nodemask_t nm;
 
 		nm = NODE_MASK_NONE;
-		node_set(node, nm);
-		p = __alloc_pages_nodemask(gfp_mask, 0, node, &nm);
+		node_set(pgtable_fixed_node, nm);
+		p = __alloc_pages_nodemask(gfp_mask, 0, pgtable_fixed_node, &nm);
 		if (!p)
 		{
 			return 0;
@@ -1132,10 +1137,15 @@ unsigned long pgtable_page_alloc_2(gfp_t gfp_mask,int node)
 	{
 		struct page *p;
 		nodemask_t nm;
-
+		if (pgtable_fixed_node<0||pgtable_fixed_node>3)
+		{
+			printk("Mitosis migration node number wrong \n");
+			pgtable_fixed_node=0;
+		}
+		
 		nm = NODE_MASK_NONE;
-		node_set(node, nm);
-		p = __alloc_pages_nodemask(gfp_mask, 0, node, &nm);
+		node_set(pgtable_fixed_node, nm);
+		p = __alloc_pages_nodemask(gfp_mask, 0, pgtable_fixed_node, &nm);
 		if (!p)
 		{
 			return 0;
@@ -1315,7 +1325,96 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 #ifdef CONFIG_PROC_SYSCTL
 #include <linux/capability.h>
 #include <linux/sysctl.h>
+#ifdef CONFIG_Migration_test //迁移测试
 int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __user *buffer,
+                                    size_t *lenp, loff_t *ppos)
+{
+	printk("Page table CONFIG_Migration_test\n");
+	struct ctl_table t;
+	int err;
+	int state = (pgtable_repl_activated ? 1 : pgtable_fixed_node);
+
+	if (write && !capable(CAP_SYS_ADMIN))
+		return -EPERM;
+
+	t = *table;
+	t.data = &state;
+	err = proc_dointvec_minmax(&t, write, buffer, lenp, ppos);
+	if (err < 0)
+		return err;
+	if (write) {
+		if (state == -1) {
+			/* the default behavior */
+			migration_test = false;
+			printk("Page table allocation set to normal behavior -1\n");
+			pgtable_repl_custom_activated = false;
+			pgtable_repl_activated = false;
+			pgtable_fixed_node = -1;
+			pgtable_fixed_nodemask = NODE_MASK_NONE;
+		} else if (state == -2) {
+			if (migration_test)
+			{
+				printk("Page table CONFIG_Migration_test is true\n");
+			}else
+			{
+				printk("Page table CONFIG_Migration_test is false\n");
+			}
+		} else if (state == -3) {
+			migration_test = true;
+			printk("Page table allocation set to normal behavior -3\n");
+			pgtable_repl_custom_activated = false;
+			pgtable_repl_activated = false;
+			pgtable_fixed_node = 0;
+			pgtable_fixed_nodemask = NODE_MASK_NONE;
+			node_set(pgtable_fixed_node, pgtable_fixed_nodemask);
+		} else if (state == -4) {
+			migration_test = true;
+			printk("Page table allocation set to normal behavior -3\n");
+			pgtable_repl_custom_activated = false;
+			pgtable_repl_activated = false;
+			pgtable_fixed_node = 1;
+			pgtable_fixed_nodemask = NODE_MASK_NONE;
+			node_set(pgtable_fixed_node, pgtable_fixed_nodemask);
+		} else if (state == -5) {
+			migration_test = true;
+			printk("Page table allocation set to normal behavior -3\n");
+			pgtable_repl_custom_activated = false;
+			pgtable_repl_activated = false;
+			pgtable_fixed_node = 2;
+			pgtable_fixed_nodemask = NODE_MASK_NONE;
+			node_set(pgtable_fixed_node, pgtable_fixed_nodemask);
+		} else if (state == -6) {
+			migration_test = true;
+			printk("Page table allocation set to normal behavior -3\n");
+			pgtable_repl_custom_activated = false;
+			pgtable_repl_activated = false;
+			pgtable_fixed_node = 3;
+			pgtable_fixed_nodemask = NODE_MASK_NONE;
+			node_set(pgtable_fixed_node, pgtable_fixed_nodemask);
+		} else if (state == 0) {
+			/* fixed on node 0 */
+			migration_test = true;
+			printk("Page table allocation set to fixed on node 0\n");
+			pgtable_repl_custom_activated = true;
+			pgtable_repl_activated = false;
+			pgtable_fixed_node = 0;
+			pgtable_fixed_nodemask = NODE_MASK_NONE;
+			node_set(pgtable_fixed_node, pgtable_fixed_nodemask);
+		} else {
+			/* replication enabled */
+			printk("Page table allocation set to replicated\n");
+			pgtable_repl_custom_activated = true;
+			pgtable_repl_activated = false;
+			pgtable_fixed_node = state;
+			pgtable_fixed_nodemask = NODE_MASK_NONE;
+			node_set(pgtable_fixed_node, pgtable_fixed_nodemask);
+		}
+	}
+	return err;
+}		
+#else
+		//正常测试
+	int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __user *buffer,
                                     size_t *lenp, loff_t *ppos)
 {
 	struct ctl_table t;
@@ -1358,7 +1457,9 @@ int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __u
 		}
 	}
 	return err;
-}
+}	
+#endif
+
 
 
 int sysctl_numa_pgtable_replication_cache_ctl(struct ctl_table *table, int write, void __user *buffer,
