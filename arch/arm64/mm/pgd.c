@@ -1329,7 +1329,6 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __user *buffer,
                                     size_t *lenp, loff_t *ppos)
 {
-	printk("Page table CONFIG_Migration_test\n");
 	struct ctl_table t;
 	int err;
 	int state = (pgtable_repl_activated ? 1 : pgtable_fixed_node);
@@ -1343,6 +1342,7 @@ int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __u
 	if (err < 0)
 		return err;
 	if (write) {
+		printk("Page table CONFIG_Migration_test\n");
 		if (state == -1) {
 			/* the default behavior */
 			migration_test = false;
@@ -1369,7 +1369,7 @@ int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __u
 			node_set(pgtable_fixed_node, pgtable_fixed_nodemask);
 		} else if (state == -4) {
 			migration_test = true;
-			printk("Page table allocation set to normal behavior -3\n");
+			printk("Page table allocation set to normal behavior -4\n");
 			pgtable_repl_custom_activated = false;
 			pgtable_repl_activated = false;
 			pgtable_fixed_node = 1;
@@ -1377,7 +1377,7 @@ int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __u
 			node_set(pgtable_fixed_node, pgtable_fixed_nodemask);
 		} else if (state == -5) {
 			migration_test = true;
-			printk("Page table allocation set to normal behavior -3\n");
+			printk("Page table allocation set to normal behavior -5\n");
 			pgtable_repl_custom_activated = false;
 			pgtable_repl_activated = false;
 			pgtable_fixed_node = 2;
@@ -1385,7 +1385,7 @@ int sysctl_numa_pgtable_replication(struct ctl_table *table, int write, void __u
 			node_set(pgtable_fixed_node, pgtable_fixed_nodemask);
 		} else if (state == -6) {
 			migration_test = true;
-			printk("Page table allocation set to normal behavior -3\n");
+			printk("Page table allocation set to normal behavior -6\n");
 			pgtable_repl_custom_activated = false;
 			pgtable_repl_activated = false;
 			pgtable_fixed_node = 3;
