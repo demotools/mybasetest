@@ -857,6 +857,7 @@ __SYSCALL(__NR_openat2, sys_openat2)
 #define __NR_pidfd_getfd 438
 __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
 
+// #ifdef CONFIG_PGTABLE_REPLICATION
 #define __NR_set_pgtblreplpolicy 439
 // __SYSCALL(__NR_set_pgtblreplpolicy,     sys_set_pgtblreplpolicy)
 __SC_COMP(__NR_set_pgtblreplpolicy, sys_set_pgtblreplpolicy, compat_sys_set_pgtblreplpolicy)
@@ -865,8 +866,16 @@ __SC_COMP(__NR_set_pgtblreplpolicy, sys_set_pgtblreplpolicy, compat_sys_set_pgtb
 // __SYSCALL(__NR_get_pgtblreplpolicy,     sys_get_pgtblreplpolicy)
 __SC_COMP(__NR_get_pgtblreplpolicy, sys_get_pgtblreplpolicy, compat_sys_get_pgtblreplpolicy)
 
+#define __NR_set_pgtblreplstart 441
+// __SYSCALL(__NR_set_pgtblreplstart,     sys_set_pgtlbreplstart)
+__SC_COMP(__NR_set_pgtblreplstart, sys_set_pgtlbreplstart, compat_sys_set_pgtlbreplstart)
+
 #undef __NR_syscalls
-#define __NR_syscalls 441
+#define __NR_syscalls 442
+// #else
+// #undef __NR_syscalls
+// #define __NR_syscalls 439
+// #endif
 
 /*
  * 32 bit systems traditionally used different

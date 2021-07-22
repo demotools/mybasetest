@@ -1712,6 +1712,47 @@ static int kernel_get_pgtlbreplpolicy(int __user *policy,
 	return err;
 }
 
+static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
+{
+	struct pid *newpid = NULL;
+	struct task_struct *newtask;
+	nodemask_t nodes;
+
+	newpid = find_get_pid(inPid);
+	if(!newpid)
+	{
+		printk("[mitosis] NOTE: no PID  find !!!!!!!!\n");
+		return -EINVAL;
+	}
+	newtask = get_pid_task(newpid, PIDTYPE_PID);
+	if(!newtask)
+	{
+		printk("[mitosis] NOTE: no task  find !!!!!!!!\n");
+		return -EINVAL;
+	}
+	int err;
+	struct mm_struct *mm = newtask->mm;
+	if (mm->repl_pgd_enabled) {
+			/* we cannot change the replication policy at runtime to include more or less nodes */
+			// if (!nodes_equal(mm->repl_pgd_nodes, nodes)) {
+			// 	printk("[mitosis] NOTE: we cannot change the replication policy at runtime...\n");
+			// 	return -EINVAL;
+			// }
+
+			printk("[mitosis] NOTE: pgtable replication already enabled...\n");
+
+			return 0;
+	}
+	printk("[mitosis] NOTE: version = 6\n");
+	printk("[mitosis] kernel_set_pgtlbreplpolicy: pid = %d\n",current->pid);
+			// mm->repl_pgd_nodes = nodes;
+			// mm->repl_pgd_enabled = true;
+	err = pgtbl_repl_prepare_replication(mm, nodes);
+
+	printk("[mitosis] pgtable replication %s for mm=%lx.\n",mm->repl_pgd_enabled ? "enabled" : "disabled", (long)mm);
+	printk("[mitosis] pgtable replication err=%d.\n",err);
+	return err;
+}
 
 #else // !CONFIG_PGTABLE_REPLICATION
 
@@ -1726,6 +1767,11 @@ static int kernel_get_pgtlbreplpolicy(int __user *policy,
                                       unsigned long maxnode,
                                       unsigned long addr,
                                       unsigned long flags)
+{
+	return 0;
+}
+//for auto config
+static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 {
 	return 0;
 }
@@ -1745,6 +1791,10 @@ SYSCALL_DEFINE5(get_pgtblreplpolicy, int __user *, policy,
 	return kernel_get_pgtlbreplpolicy(policy, nmask, maxnode, addr, flags);
 }
 
+SYSCALL_DEFINE3(set_pgtblreplstart, int, inPid, int, mode1, int, mode2)
+{
+	return kernel_set_pgtlbreplstart(inPid, mode1, mode2);
+}
 
 #ifdef CONFIG_COMPAT
 
@@ -1799,6 +1849,10 @@ COMPAT_SYSCALL_DEFINE3(set_pgtblreplpolicy, int, mode, compat_ulong_t __user *, 
 	return kernel_set_pgtlbreplpolicy(mode, nm, nr_bits+1);
 }
 
+COMPAT_SYSCALL_DEFINE3(set_pgtblreplstart, int, inPid, int, mode1, int, mode2)
+{
+	return kernel_set_pgtlbreplstart(inPid, mode1, mode2);
+}
 #endif // CONFIG_COMPAT
 
 
