@@ -867,8 +867,8 @@ __SC_COMP(__NR_set_pgtblreplpolicy, sys_set_pgtblreplpolicy, compat_sys_set_pgtb
 __SC_COMP(__NR_get_pgtblreplpolicy, sys_get_pgtblreplpolicy, compat_sys_get_pgtblreplpolicy)
 
 #define __NR_set_pgtblreplstart 441
-// __SYSCALL(__NR_set_pgtblreplstart,     sys_set_pgtlbreplstart)
-__SC_COMP(__NR_set_pgtblreplstart, sys_set_pgtlbreplstart, compat_sys_set_pgtlbreplstart)
+// __SYSCALL(__NR_set_pgtblreplstart,     sys_set_pgtblreplstart)
+__SC_COMP(__NR_set_pgtblreplstart, sys_set_pgtblreplstart, compat_sys_set_pgtblreplstart)
 
 #undef __NR_syscalls
 #define __NR_syscalls 442
