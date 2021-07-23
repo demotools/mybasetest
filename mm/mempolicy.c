@@ -1714,6 +1714,8 @@ static int kernel_get_pgtlbreplpolicy(int __user *policy,
 
 static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 {
+	printk("[mitosis] we got in qhl !!!!!!!!\n");
+	/*
 	struct pid *newpid = NULL;
 	struct task_struct *newtask;
 	nodemask_t nodes;
@@ -1733,11 +1735,7 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 	int err;
 	struct mm_struct *mm = newtask->mm;
 	if (mm->repl_pgd_enabled) {
-			/* we cannot change the replication policy at runtime to include more or less nodes */
-			// if (!nodes_equal(mm->repl_pgd_nodes, nodes)) {
-			// 	printk("[mitosis] NOTE: we cannot change the replication policy at runtime...\n");
-			// 	return -EINVAL;
-			// }
+			
 
 			printk("[mitosis] NOTE: pgtable replication already enabled...\n");
 
@@ -1752,6 +1750,8 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 	printk("[mitosis] pgtable replication %s for mm=%lx.\n",mm->repl_pgd_enabled ? "enabled" : "disabled", (long)mm);
 	printk("[mitosis] pgtable replication err=%d.\n",err);
 	return err;
+	*/
+	return 0;
 }
 
 #else // !CONFIG_PGTABLE_REPLICATION
