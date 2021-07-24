@@ -1718,7 +1718,8 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 	
 	struct pid *newpid = NULL;
 	struct task_struct *newtask;
-	nodemask_t nodes;
+	nodemask_t nodes = NODE_MASK_NONE;
+	int err;
 
 	newpid = find_get_pid(inPid);
 	if(!newpid)
@@ -1738,9 +1739,8 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 	{
 		printk("[mitosis] NOTE:  task  find !!!!!!!!\n");
 	}
-	/*
-	int err;
-	struct mm_struct *mm = newtask->mm;
+	
+	mm = newtask->mm;
 	if (mm->repl_pgd_enabled) {
 			
 
@@ -1752,12 +1752,13 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 	printk("[mitosis] kernel_set_pgtlbreplpolicy: pid = %d\n",current->pid);
 			// mm->repl_pgd_nodes = nodes;
 			// mm->repl_pgd_enabled = true;
-	err = pgtbl_repl_prepare_replication(mm, nodes);
+	// /*
+	err = pgtbl_repl_prepare_replication_for_autoconfig(newtask, nodes);
 
 	printk("[mitosis] pgtable replication %s for mm=%lx.\n",mm->repl_pgd_enabled ? "enabled" : "disabled", (long)mm);
 	printk("[mitosis] pgtable replication err=%d.\n",err);
 	return err;
-	*/
+	// */
 	return 0;
 }
 
