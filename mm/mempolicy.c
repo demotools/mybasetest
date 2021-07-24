@@ -1714,8 +1714,8 @@ static int kernel_get_pgtlbreplpolicy(int __user *policy,
 
 static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 {
-	printk("[mitosis] we got in qhl !!!!!!!!\n");
-	/*
+	printk("[mitosis] we got in qhl  pid = %d  !!!!!!!!\n",inPid);
+	
 	struct pid *newpid = NULL;
 	struct task_struct *newtask;
 	nodemask_t nodes;
@@ -1725,13 +1725,20 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 	{
 		printk("[mitosis] NOTE: no PID  find !!!!!!!!\n");
 		return -EINVAL;
+	}else
+	{
+		printk("[mitosis] NOTE:  PID  find !!!!!!!!\n");
 	}
 	newtask = get_pid_task(newpid, PIDTYPE_PID);
 	if(!newtask)
 	{
 		printk("[mitosis] NOTE: no task  find !!!!!!!!\n");
 		return -EINVAL;
+	}else
+	{
+		printk("[mitosis] NOTE:  task  find !!!!!!!!\n");
 	}
+	/*
 	int err;
 	struct mm_struct *mm = newtask->mm;
 	if (mm->repl_pgd_enabled) {
