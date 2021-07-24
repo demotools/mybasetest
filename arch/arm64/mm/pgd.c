@@ -1358,94 +1358,94 @@ int pgtbl_repl_prepare_replication_for_autoconfig(struct task_struct *newtask, n
 	spin_lock(&mm->page_table_lock);
 	pgd = (pgd_t *)mm->pgd;
 
-	/* we need to talk the page table */
-	mm->repl_pgd_nodes = nodes;
-	mm->repl_pgd_enabled = true;
+	// /* we need to talk the page table */
+	// mm->repl_pgd_nodes = nodes;
+	// mm->repl_pgd_enabled = true;
 
-	printk("[mitosis] pgtbl_repl_prepare_replication  for mm=%lx.\n",(long)mm);
-	/* this will replicate the pgd */
-	pgtable_repl_pgd_alloc(mm);
-	//	if (!mm->repl_pgd_enabled) {panic("FOOOF");}
-		printk("%s:%u pgd=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pgd, (long)pgd + 4095);
-	for (pgd_idx = 0; pgd_idx < 512; pgd_idx++) {
-		if (pgd_none(pgd[pgd_idx])) {
-			continue;
-		}
-		printk("PTREP: pgd_idx = %ld，and pgd=%lx  and pgd[%ld]=%lx\n",pgd_idx,(long)(pgd + pgd_idx),pgd_idx, (long)pgd_val(pgd[pgd_idx]));
-		// pud = (pud_t *)pgd_page_vaddr(pgd[pgd_idx]);  //origin
-		pud = (pud_t *)page_to_virt(pgd_page(pgd[pgd_idx])); //first version
-		printk("%s:%u pgd[%ld]'s pud=%lx..%lx\n", __FUNCTION__, __LINE__, pgd_idx,(long)pud, (long)pud + 4095);
+	// printk("[mitosis] pgtbl_repl_prepare_replication  for mm=%lx.\n",(long)mm);
+	// /* this will replicate the pgd */
+	// pgtable_repl_pgd_alloc(mm);
+	// //	if (!mm->repl_pgd_enabled) {panic("FOOOF");}
+	// 	printk("%s:%u pgd=%lx..%lx\n", __FUNCTION__, __LINE__, (long)pgd, (long)pgd + 4095);
+	// for (pgd_idx = 0; pgd_idx < 512; pgd_idx++) {
+	// 	if (pgd_none(pgd[pgd_idx])) {
+	// 		continue;
+	// 	}
+	// 	printk("PTREP: pgd_idx = %ld，and pgd=%lx  and pgd[%ld]=%lx\n",pgd_idx,(long)(pgd + pgd_idx),pgd_idx, (long)pgd_val(pgd[pgd_idx]));
+	// 	// pud = (pud_t *)pgd_page_vaddr(pgd[pgd_idx]);  //origin
+	// 	pud = (pud_t *)page_to_virt(pgd_page(pgd[pgd_idx])); //first version
+	// 	printk("%s:%u pgd[%ld]'s pud=%lx..%lx\n", __FUNCTION__, __LINE__, pgd_idx,(long)pud, (long)pud + 4095);
 		
-		// pud = (pud_t *)__va(pgd_val(pgd[pgd_idx]));
-		//这个换算方法结果时错误的，有偏移// 
-		printk("%s:%u another func __va pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)(pud_t *)__va(__pgd_to_phys(pgd[pgd_idx])), (long)(pud_t *)__va(__pgd_to_phys(pgd[pgd_idx])) + 4095);
-		printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pud)), (long)virt_to_pfn(pud));
-		pgtable_repl_alloc_pud(mm, (unsigned long)virt_to_pfn(pud));
-		//	printk("%s:%u set_p4d(p4d[%zu], 0x%lx, 0x%lx\n",__FUNCTION__, __LINE__,  p4d_idx, _PAGE_TABLE | __pa(pud_new), p4d_val(__p4d(_PAGE_TABLE | __pa(pud_new))));
-		// pgtable_repl_set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
-		set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
-		printk("[mitosis] start search pud .......\n");
-		for (pud_idx = 0; pud_idx < 512; pud_idx++) {
-			if (pud_none(pud[pud_idx])) {
-				continue;
-			}
-			pud_num++;
-			// if (pud_huge(pud[pud_idx])) {
-			// 	set_pud(pud + pud_idx, pud[pud_idx]);
-			// 	continue;
-			// }
-			printk("PTREP: pud_idx = %ld，and pud=%lx  and pud[%ld]=%lx\n",pud_idx,(long)(pud + pud_idx),pud_idx, (long)pud_val(pud[pud_idx]));
-			//  pmd =  (pmd_t *)pud_page_vaddr(pud[pud_idx]);
-			//pmd =  (pmd_t *)page_to_virt(pud_page(pud[pud_idx]));
-			pmd =  (pmd_t *)page_to_virt(pud_page(pud[pud_idx]));
-			printk("%s:%u pud[%ld]'s pmd=%lx..%lx\n", __FUNCTION__, __LINE__, pud_idx,(long)pmd, (long)pmd + 4095);
-			printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pmd)), (long)virt_to_pfn(pmd));
-			pgtable_repl_alloc_pmd(mm, (unsigned long)virt_to_pfn(pmd));
-			set_pud(pud + pud_idx,pud[pud_idx]);
-			// pgtable_repl_set_pud(pud + pud_idx,pud[pud_idx]);
+	// 	// pud = (pud_t *)__va(pgd_val(pgd[pgd_idx]));
+	// 	//这个换算方法结果时错误的，有偏移// 
+	// 	printk("%s:%u another func __va pud=%lx..%lx\n", __FUNCTION__, __LINE__, (long)(pud_t *)__va(__pgd_to_phys(pgd[pgd_idx])), (long)(pud_t *)__va(__pgd_to_phys(pgd[pgd_idx])) + 4095);
+	// 	printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pud)), (long)virt_to_pfn(pud));
+	// 	pgtable_repl_alloc_pud(mm, (unsigned long)virt_to_pfn(pud));
+	// 	//	printk("%s:%u set_p4d(p4d[%zu], 0x%lx, 0x%lx\n",__FUNCTION__, __LINE__,  p4d_idx, _PAGE_TABLE | __pa(pud_new), p4d_val(__p4d(_PAGE_TABLE | __pa(pud_new))));
+	// 	// pgtable_repl_set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
+	// 	set_pgd(pgd + pgd_idx, pgd[pgd_idx]);
+	// 	printk("[mitosis] start search pud .......\n");
+	// 	for (pud_idx = 0; pud_idx < 512; pud_idx++) {
+	// 		if (pud_none(pud[pud_idx])) {
+	// 			continue;
+	// 		}
+	// 		pud_num++;
+	// 		// if (pud_huge(pud[pud_idx])) {
+	// 		// 	set_pud(pud + pud_idx, pud[pud_idx]);
+	// 		// 	continue;
+	// 		// }
+	// 		printk("PTREP: pud_idx = %ld，and pud=%lx  and pud[%ld]=%lx\n",pud_idx,(long)(pud + pud_idx),pud_idx, (long)pud_val(pud[pud_idx]));
+	// 		//  pmd =  (pmd_t *)pud_page_vaddr(pud[pud_idx]);
+	// 		//pmd =  (pmd_t *)page_to_virt(pud_page(pud[pud_idx]));
+	// 		pmd =  (pmd_t *)page_to_virt(pud_page(pud[pud_idx]));
+	// 		printk("%s:%u pud[%ld]'s pmd=%lx..%lx\n", __FUNCTION__, __LINE__, pud_idx,(long)pmd, (long)pmd + 4095);
+	// 		printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pmd)), (long)virt_to_pfn(pmd));
+	// 		pgtable_repl_alloc_pmd(mm, (unsigned long)virt_to_pfn(pmd));
+	// 		set_pud(pud + pud_idx,pud[pud_idx]);
+	// 		// pgtable_repl_set_pud(pud + pud_idx,pud[pud_idx]);
 
-			for (pmd_idx = 0; pmd_idx < 512; pmd_idx++) {
+	// 		for (pmd_idx = 0; pmd_idx < 512; pmd_idx++) {
 
-				if (pmd_none(pmd[pmd_idx])) {
-					continue;
-				}
-				pmd_num++;
-				// if (pmd_huge(pmd[pmd_idx])) {
-				// 	set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
-				// 	continue;
-				// }
-				printk("PTREP: pmd_idx = %ld，and pmd=%lx  and pmd[%ld]=%lx\n",pmd_idx,(long)(pmd + pmd_idx),pmd_idx, (long)pmd_val(pmd[pmd_idx]));
-				/* get the pte page */
-				//  pte = (pte_t *)pmd_page_vaddr(pmd[pmd_idx]);
-				pte = (pte_t *)page_to_virt(pmd_page(pmd[pmd_idx]));
-				printk("%s:%u pmd[%ld]'s pte=%lx..%lx\n", __FUNCTION__, __LINE__, pmd_idx,(long)pte, (long)pte + 4095);
-				printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pte)), (long)virt_to_pfn(pte));
+	// 			if (pmd_none(pmd[pmd_idx])) {
+	// 				continue;
+	// 			}
+	// 			pmd_num++;
+	// 			// if (pmd_huge(pmd[pmd_idx])) {
+	// 			// 	set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
+	// 			// 	continue;
+	// 			// }
+	// 			printk("PTREP: pmd_idx = %ld，and pmd=%lx  and pmd[%ld]=%lx\n",pmd_idx,(long)(pmd + pmd_idx),pmd_idx, (long)pmd_val(pmd[pmd_idx]));
+	// 			/* get the pte page */
+	// 			//  pte = (pte_t *)pmd_page_vaddr(pmd[pmd_idx]);
+	// 			pte = (pte_t *)page_to_virt(pmd_page(pmd[pmd_idx]));
+	// 			printk("%s:%u pmd[%ld]'s pte=%lx..%lx\n", __FUNCTION__, __LINE__, pmd_idx,(long)pte, (long)pte + 4095);
+	// 			printk("%s:%u 1 pfn=%lx   2 pfn=%lx\n", __FUNCTION__, __LINE__, (long)page_to_pfn(page_of_ptable_entry(pte)), (long)virt_to_pfn(pte));
 
-				pgtable_repl_alloc_pte(mm, page_to_pfn(page_of_ptable_entry(pte)));
-				// pgtable_repl_set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
-				set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
+	// 			pgtable_repl_alloc_pte(mm, page_to_pfn(page_of_ptable_entry(pte)));
+	// 			// pgtable_repl_set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
+	// 			set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
 
-				for (pte_idx = 0; pte_idx < 512; pte_idx++) {
-					if (pte_none(pte[pte_idx])) {
-						continue;
-					}
-					pte_num++;
-					// if (pte_num<10)
-					// {
-					// 	printk("PTREP: pte_idx = %ld，and pte=%lx  and pte[%ld]=%lx\n",pte_idx,(long)(pte + pte_idx),pte_idx, (long)pte_val(pte[pte_idx]));
-					// 	pgtable_repl_set_pte_with_log(pte + pte_idx, pte[pte_idx]);
-					// }
-					// else
-					// {
-						// pgtable_repl_set_pte(pte + pte_idx, pte[pte_idx]);
-					// }
-					set_pte(pte + pte_idx, pte[pte_idx]);				
-				}
-			}
-		}
-		printk("===================================== end of a page\n");
-	}
-	printk("%s:%u all: pud_num=%d, pmd_num=%d, pte_num=%d\n", __FUNCTION__, __LINE__, pud_num, pmd_num,pte_num);
+	// 			for (pte_idx = 0; pte_idx < 512; pte_idx++) {
+	// 				if (pte_none(pte[pte_idx])) {
+	// 					continue;
+	// 				}
+	// 				pte_num++;
+	// 				// if (pte_num<10)
+	// 				// {
+	// 				// 	printk("PTREP: pte_idx = %ld，and pte=%lx  and pte[%ld]=%lx\n",pte_idx,(long)(pte + pte_idx),pte_idx, (long)pte_val(pte[pte_idx]));
+	// 				// 	pgtable_repl_set_pte_with_log(pte + pte_idx, pte[pte_idx]);
+	// 				// }
+	// 				// else
+	// 				// {
+	// 					// pgtable_repl_set_pte(pte + pte_idx, pte[pte_idx]);
+	// 				// }
+	// 				set_pte(pte + pte_idx, pte[pte_idx]);				
+	// 			}
+	// 		}
+	// 	}
+	// 	printk("===================================== end of a page\n");
+	// }
+	// printk("%s:%u all: pud_num=%d, pmd_num=%d, pte_num=%d\n", __FUNCTION__, __LINE__, pud_num, pmd_num,pte_num);
 	spin_unlock(&mm->page_table_lock);
 	task_unlock(newtask);
 	if (err) {
@@ -1454,20 +1454,9 @@ int pgtbl_repl_prepare_replication_for_autoconfig(struct task_struct *newtask, n
 
 	}
 	
-	unsigned int cpu = smp_processor_id();
-	check_and_switch_context(mm, cpu);
-	// cpu_switch_mm(mm->pgd, mm);
-	// cpu_do_switch_mm(mm->pgd,mm);
-	// cpu_set_reserved_ttbr0();
-	// local_flush_tlb_all();
-	// cpu_set_default_tcr_t0sz();
-
-	// if (mm != &init_mm && !system_uses_ttbr0_pan())
-	// {
-	// 	cpu_switch_mm(mm->pgd, mm);
-	// }
-		
-	// pgtable_repl_write_cr3(__native_read_cr3());
+	// unsigned int cpu = smp_processor_id();
+	// check_and_switch_context(mm, cpu);
+	
 	printk("PTREP: Called pgtbl_repl_prepare_replication  done\n");
 	return err;
 }
