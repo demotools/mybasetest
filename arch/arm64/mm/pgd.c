@@ -1331,6 +1331,9 @@ int pgtbl_repl_prepare_replication_for_autoconfig(struct task_struct *newtask, n
 	int pmd_num = 0;
 	int pte_num = 0;
 	struct mm_struct *mm;
+	
+	task_lock(newtask);
+	
 	mm = newtask->mm;
 
 	if (mm->repl_pgd_enabled) {
@@ -1354,7 +1357,6 @@ int pgtbl_repl_prepare_replication_for_autoconfig(struct task_struct *newtask, n
 		return 0;
 	}
 	printk("PTREP: Called pgtbl_repl_prepare_replication version 2\n");
-	task_lock(newtask);
 	spin_lock(&mm->page_table_lock);
 	pgd = (pgd_t *)mm->pgd;
 
@@ -1448,11 +1450,11 @@ int pgtbl_repl_prepare_replication_for_autoconfig(struct task_struct *newtask, n
 	// printk("%s:%u all: pud_num=%d, pmd_num=%d, pte_num=%d\n", __FUNCTION__, __LINE__, pud_num, pmd_num,pte_num);
 	spin_unlock(&mm->page_table_lock);
 	task_unlock(newtask);
-	if (err) {
-		mm->repl_pgd_enabled = false;
-		printk("PGREPL: DISABLE MITOSIS DUE TO ERROR\n");
+	// if (err) {
+	// 	mm->repl_pgd_enabled = false;
+	// 	printk("PGREPL: DISABLE MITOSIS DUE TO ERROR\n");
 
-	}
+	// }
 	
 	// unsigned int cpu = smp_processor_id();
 	// check_and_switch_context(mm, cpu);
