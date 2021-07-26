@@ -1753,13 +1753,12 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 
 	// printk("[mitosis] pgtable replication %s for mm=%lx.\n",mm->repl_pgd_enabled ? "enabled" : "disabled", (long)mm);
 	printk("[mitosis] pgtable replication err=%d.\n",err);
-	task_unlock(task);
+	task_unlock(newtask);
 	mmput(mm);
 
 	char name[sizeof(newtask->comm)];
 
-	printk("[mitosis]: `%s'  is task name\n",
-		     get_task_comm(name, newtask));
+	printk("[mitosis]: %s  is task name\n",get_task_comm(name, newtask));
 
 	return err;
 	// */
