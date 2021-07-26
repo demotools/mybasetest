@@ -1743,7 +1743,7 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 	
 	mm = get_task_mm(newtask);
 
-
+	task_lock(newtask);
 	printk("[mitosis] NOTE: version = 6\n");
 	printk("[mitosis] kernel_set_pgtlbreplpolicy: pid = %d\n",newtask->pid);
 			// mm->repl_pgd_nodes = nodes;
@@ -1753,8 +1753,14 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 
 	// printk("[mitosis] pgtable replication %s for mm=%lx.\n",mm->repl_pgd_enabled ? "enabled" : "disabled", (long)mm);
 	printk("[mitosis] pgtable replication err=%d.\n",err);
-
+	task_unlock(task);
 	mmput(mm);
+
+	char name[sizeof(newtask->comm)];
+
+	printk("[mitosis]: `%s'  is task name\n",
+		     get_task_comm(name, newtask));
+
 	return err;
 	// */
 	// return 0;
