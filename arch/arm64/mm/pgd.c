@@ -1334,31 +1334,31 @@ int pgtbl_repl_prepare_replication_for_autoconfig(struct task_struct *newtask, n
 	
 	task_lock(newtask);
 	
-	mm = newtask->mm;
+	// mm = newtask->mm;
 
-	if (mm->repl_pgd_enabled) {
+	// if (mm->repl_pgd_enabled) {
 			
 
-			printk("[mitosis] NOTE: pgtable replication already enabled...\n");
+	// 		printk("[mitosis] NOTE: pgtable replication already enabled...\n");
 
-			return 0;
-	}
+	// 		return 0;
+	// }
 
 
-	/* check if the subsystem is initialized. this should actually be the case */
-	if (unlikely(!pgtable_repl_initialized)) {
-		panic("PTREPL: %s:%u - subsystem should be enabled by now! \n", __FUNCTION__, __LINE__);
-		printk("PTREP: pgtable_repl_initialized = no\n");
-	}
+	// /* check if the subsystem is initialized. this should actually be the case */
+	// if (unlikely(!pgtable_repl_initialized)) {
+	// 	panic("PTREPL: %s:%u - subsystem should be enabled by now! \n", __FUNCTION__, __LINE__);
+	// 	printk("PTREP: pgtable_repl_initialized = no\n");
+	// }
 
-	/* if it already has been enbaled, don't do anything */
-	if (unlikely(mm->repl_pgd_enabled)) {
-		printk("PTREP: already has been enbaled\n");
-		return 0;
-	}
-	printk("PTREP: Called pgtbl_repl_prepare_replication version 2\n");
-	spin_lock(&mm->page_table_lock);
-	pgd = (pgd_t *)mm->pgd;
+	// /* if it already has been enbaled, don't do anything */
+	// if (unlikely(mm->repl_pgd_enabled)) {
+	// 	printk("PTREP: already has been enbaled\n");
+	// 	return 0;
+	// }
+	// printk("PTREP: Called pgtbl_repl_prepare_replication version 2\n");
+	// spin_lock(&mm->page_table_lock);
+	// pgd = (pgd_t *)mm->pgd;
 
 	// /* we need to talk the page table */
 	// mm->repl_pgd_nodes = nodes;
@@ -1448,7 +1448,7 @@ int pgtbl_repl_prepare_replication_for_autoconfig(struct task_struct *newtask, n
 	// 	printk("===================================== end of a page\n");
 	// }
 	// printk("%s:%u all: pud_num=%d, pmd_num=%d, pte_num=%d\n", __FUNCTION__, __LINE__, pud_num, pmd_num,pte_num);
-	spin_unlock(&mm->page_table_lock);
+	// spin_unlock(&mm->page_table_lock);
 	task_unlock(newtask);
 	// if (err) {
 	// 	mm->repl_pgd_enabled = false;
