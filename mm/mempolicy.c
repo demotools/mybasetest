@@ -1740,6 +1740,9 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 	{
 		printk("[mitosis] NOTE:  task  find !!!!!!!!\n");
 	}
+	char name[sizeof(newtask->comm)];
+
+	printk("[mitosis]: %s  is task name\n",get_task_comm(name, newtask));
 	
 	mm = get_task_mm(newtask);
 
@@ -1749,16 +1752,14 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 			// mm->repl_pgd_nodes = nodes;
 			// mm->repl_pgd_enabled = true;
 	// /*
-	// err = pgtbl_repl_prepare_replication_for_autoconfig(newtask, nodes);
+	err = pgtbl_repl_prepare_replication_for_autoconfig(mm, nodes);
 
 	// printk("[mitosis] pgtable replication %s for mm=%lx.\n",mm->repl_pgd_enabled ? "enabled" : "disabled", (long)mm);
 	printk("[mitosis] pgtable replication err=%d.\n",err);
 	task_unlock(newtask);
 	mmput(mm);
 
-	char name[sizeof(newtask->comm)];
-
-	printk("[mitosis]: %s  is task name\n",get_task_comm(name, newtask));
+	
 
 	return err;
 	// */
