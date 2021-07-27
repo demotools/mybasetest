@@ -1452,8 +1452,7 @@ int pgtbl_repl_prepare_replication_for_autoconfig(struct mm_struct *mm, nodemask
 
 	// }
 	
-	// unsigned int cpu = smp_processor_id();
-	// check_and_switch_context(mm, cpu);
+	
 	
 	printk("PTREP: Called pgtbl_repl_prepare_replication  done\n");
 	return err;

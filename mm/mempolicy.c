@@ -1757,6 +1757,10 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 	// printk("[mitosis] pgtable replication %s for mm=%lx.\n",mm->repl_pgd_enabled ? "enabled" : "disabled", (long)mm);
 	printk("[mitosis] pgtable replication err=%d.\n",err);
 	task_unlock(newtask);
+
+	unsigned int cpu = task_cpu(newtask);
+	check_and_switch_context(mm, cpu);
+
 	mmput(mm);
 
 	
