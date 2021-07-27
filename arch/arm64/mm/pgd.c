@@ -1446,7 +1446,6 @@ int pgtbl_repl_prepare_replication_for_autoconfig(struct mm_struct *mm, struct t
 		printk("===================================== end of a page\n");
 	}
 	printk("%s:%u all: pud_num=%d, pmd_num=%d, pte_num=%d\n", __FUNCTION__, __LINE__, pud_num, pmd_num,pte_num);
-	spin_unlock(&mm->page_table_lock);
 	
 	if (err) {
 		mm->repl_pgd_enabled = false;
@@ -1456,7 +1455,8 @@ int pgtbl_repl_prepare_replication_for_autoconfig(struct mm_struct *mm, struct t
 	unsigned int cpu = task_cpu(newtask);
 	printk("[mitosis] newtast cpu =%d.\n",cpu);
 	check_and_switch_context(mm, cpu);
-	
+
+	spin_unlock(&mm->page_table_lock);
 	task_unlock(newtask);
 	
 	printk("PTREP: Called pgtbl_repl_prepare_replication  done\n");
