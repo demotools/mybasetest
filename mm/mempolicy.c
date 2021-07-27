@@ -1746,20 +1746,19 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 	
 	mm = get_task_mm(newtask);
 
-	task_lock(newtask);
+	
 	printk("[mitosis] NOTE: version = 6\n");
 	printk("[mitosis] kernel_set_pgtlbreplpolicy: pid = %d\n",newtask->pid);
 			// mm->repl_pgd_nodes = nodes;
 			// mm->repl_pgd_enabled = true;
 	// /*
-	err = pgtbl_repl_prepare_replication_for_autoconfig(mm, nodes);
+	err = pgtbl_repl_prepare_replication_for_autoconfig(mm, newtask,nodes);
 
 	// printk("[mitosis] pgtable replication %s for mm=%lx.\n",mm->repl_pgd_enabled ? "enabled" : "disabled", (long)mm);
 	printk("[mitosis] pgtable replication err=%d.\n",err);
-	task_unlock(newtask);
+	// task_unlock(newtask);
 
-	unsigned int cpu = task_cpu(newtask);
-	check_and_switch_context(mm, cpu);
+	
 
 	mmput(mm);
 
