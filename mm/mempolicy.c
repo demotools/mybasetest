@@ -1762,7 +1762,7 @@ static long kernel_set_pgtlbreplstart(int inPid,int mode1,int mode2)
 
 	mmput(mm);
 
-	
+	printk("[mitosis] success mmput .\n");
 
 	return err;
 	// */
