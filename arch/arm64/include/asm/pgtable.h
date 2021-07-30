@@ -37,7 +37,7 @@
 
 #ifdef CONFIG_PGTABLE_REPLICATION
 
-#define	CONFIG_Migration_test  //迁移测试是打开，多线程测试时关闭
+// #define	CONFIG_Migration_test  //迁移测试是打开，多线程测试时关闭
 /*
  * ==================================================================
  * Debug Macros
