@@ -280,9 +280,6 @@ static inline pte_t pte_mkdevmap(pte_t pte)
 #ifdef CONFIG_PGTABLE_REPLICATION
 static inline void set_pte(pte_t *ptep, pte_t pte)
 {
-	//pgtrepl
-	pgtable_repl_set_pte(ptep, pte);
-
 	WRITE_ONCE(*ptep, pte);
 	/*
 	 * Only if the new pte is valid and kernel, otherwise TLB maintenance
@@ -292,6 +289,8 @@ static inline void set_pte(pte_t *ptep, pte_t pte)
 		dsb(ishst);
 		isb();
 	}	
+	//pgtrepl
+	pgtable_repl_set_pte(ptep, pte);
 }
 
 static inline void native_set_pte(pte_t *ptep, pte_t pte)
@@ -576,14 +575,15 @@ static inline void set_pmd(pmd_t *pmdp, pmd_t pmd)
 		return;
 	}
 #endif /* __PAGETABLE_PMD_FOLDED */
-	//pgtrepl
-	pgtable_repl_set_pmd(pmdp, pmd);
-
+	
 	WRITE_ONCE(*pmdp, pmd);
 	if (pmd_valid(pmd)) {
 		dsb(ishst);
 		isb();
 	}	
+
+	//pgtrepl
+	pgtable_repl_set_pmd(pmdp, pmd);
 }
 
 static inline void native_set_pmd(pmd_t *pmdp, pmd_t pmd)
@@ -675,14 +675,15 @@ static inline void set_pud(pud_t *pudp, pud_t pud)
 		return;
 	}
 #endif /* __PAGETABLE_PUD_FOLDED */
-	//pgtrepl
-	pgtable_repl_set_pud(pudp, pud);
-
+	
 	WRITE_ONCE(*pudp, pud);
 	if (pud_valid(pud)) {
 		dsb(ishst);
 		isb();
 	}  	
+
+	//pgtrepl
+	pgtable_repl_set_pud(pudp, pud);
 }
 
 static inline void native_set_pud(pud_t *pudp, pud_t pud)
@@ -772,12 +773,13 @@ static inline void set_pgd(pgd_t *pgdp, pgd_t pgd)
 		set_swapper_pgd(pgdp, pgd);
 		return;
 	}
-	//pgtrepl	
-	pgtable_repl_set_pgd(pgdp, pgd);
 
 	WRITE_ONCE(*pgdp, pgd);
 	dsb(ishst);
 	isb();
+
+	//pgtrepl	
+	pgtable_repl_set_pgd(pgdp, pgd);
 }
 static inline void native_set_pgd(pgd_t *pgdp, pgd_t pgd)
 {

@@ -164,18 +164,19 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 		mm->repl_pgd[i] = mm->pgd;
 	}
 
-	/* don't do replication for init */
+	/* don't do replication for init */ //开机阶段的都是init_mm 跳过,直到用户开启进程才会往下走
 	if (unlikely(mm == &init_mm)) {
 		printk("PTREPL: Not activating mm because it was init.\n");
 		mm->repl_pgd_enabled = false;
 		return 0;
 	}
 	
+	if (!pgtable_repl_custom_activated) {
+		return 0;
+	}
 	
 	if (unlikely(!pgtable_repl_initialized)) {
-		if (!pgtable_repl_custom_activated) {
-		return 0;
-		}
+		
 		pgtable_repl_initialized = (nr_node_ids != MAX_NUMNODES);
 		if (pgtable_repl_initialized) {
 			if (pgtable_fixed_node == -1) {
@@ -679,14 +680,14 @@ void pgtable_repl_set_pte(pte_t *ptep, pte_t pteval)
 	offset = (long)ptep - (long)page_to_virt(page_pte);
 	check_offset(offset);
 	// printk("------ 1 . page_pte->replica_node_id = %d------\n",page_pte->replica_node_id);
-	while(page_pte->replica_node_id != -1)
-	{
-		page_tmp = page_pte->replica;
-		page_pte = page_tmp;
-		// ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
-		// native_set_pte(ptep, pteval);
-		printk("------2 . page_pte->replica_node_id = %d------\n",page_pte->replica_node_id);
-	}
+	// while(page_pte->replica_node_id != -1)
+	// {
+	// 	page_tmp = page_pte->replica;
+	// 	page_pte = page_tmp;
+	// 	// ptep = (pte_t *)((long)page_to_virt(page_pte) + offset);
+	// 	// native_set_pte(ptep, pteval);
+	// 	printk("------2 . page_pte->replica_node_id = %d------\n",page_pte->replica_node_id);
+	// }
 
 	for (i = 0; i < nr_node_ids; i++) {
 		page_pte = page_pte->replica;
@@ -776,15 +777,16 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 	offset = ((long)pmdp & ~PAGE_MASK);
 	check_offset(offset);
 	// printk("------ 1 . page_pmd->replica_node_id = %d------\n",page_pmd->replica_node_id);
-	while(page_pmd->replica_node_id != -1)
-	{
-		page_tmp = page_pmd->replica;
-		page_pmd = page_tmp;
-		printk("------2 . page_pmd->replica_node_id = %d------\n",page_pmd->replica_node_id);
-	}
+	// while(page_pmd->replica_node_id != -1)
+	// {
+	// 	page_tmp = page_pmd->replica;
+	// 	page_pmd = page_tmp;
+	// 	printk("------2 . page_pmd->replica_node_id = %d------\n",page_pmd->replica_node_id);
+	// }
 
 	/* the entry is a large entry i.e. pointing to a frame, or the entry is not valid */
-	if (!page_pte || pmd_none(pmdval) || !pmd_present(pmdval)) {
+	if (!page_pte || pmd_none(pmdval) || !pmd_present(pmdval)|| pmd_thp_or_huge(pmdval)
+			|| is_pmd_migration_entry(pmdval) || is_swap_pmd(pmdval) {
 		// printk("PTREP: set_pmd  origin pmd=%lx  and pmdval=%lx\n",(long)pmdp, (long)pmd_val(pmdval));
 		// printk("PTREP: Called pgtable_repl_set_pmd  !page_te \n");
 		// BUG_ON(1);
@@ -841,15 +843,15 @@ void pgtable_repl_set_pud(pud_t *pudp, pud_t pudval)
 	check_offset(offset);
 // printk("------ 1 . page_pud->replica_node_id = %d------\n",page_pud->replica_node_id);
 	page_pmd = pud_page(pudval);
-	while(page_pud->replica_node_id != -1)
-	{
-		page_tmp = page_pud->replica;
-		page_pud = page_tmp;
-		printk("------2 . page_pud->replica_node_id = %d------\n",page_pud->replica_node_id);
-	}
+	// while(page_pud->replica_node_id != -1)
+	// {
+	// 	page_tmp = page_pud->replica;
+	// 	page_pud = page_tmp;
+	// 	printk("------2 . page_pud->replica_node_id = %d------\n",page_pud->replica_node_id);
+	// }
 
 	/* there is no age for this entry or the entry is huge or the entry is not present */
-	if (!page_pmd || !pud_present(pudval) || pud_none(pudval)) {
+	if (!page_pmd || !pud_present(pudval) || pud_huge(pudval) || pud_none(pudval)) {
 		// printk("PTREP: set_pud  origin pud=%lx  and pudval=%lx\n",(long)pudp, (long)pud_val(pudval));
 		// printk("PTREP: Called pgtable_repl_set_pud  !page_pmd \n");
 		// BUG_ON(1);
@@ -903,12 +905,12 @@ void pgtable_repl_set_pgd(pgd_t *pgdp, pgd_t pgdval)
 	check_offset(offset);
 	// printk("------ 1 . page_pgd->replica_node_id = %d------\n",page_pgd->replica_node_id);
 	page_pud = pgd_page(pgdval);
-	while(page_pgd->replica_node_id != -1)
-	{
-		page_tmp = page_pgd->replica;
-		page_pgd = page_tmp;
-		printk("------2 . page_pgd->replica_node_id = %d------\n",page_pgd->replica_node_id);	
-	}
+	// while(page_pgd->replica_node_id != -1)
+	// {
+	// 	page_tmp = page_pgd->replica;
+	// 	page_pgd = page_tmp;
+	// 	printk("------2 . page_pgd->replica_node_id = %d------\n",page_pgd->replica_node_id);	
+	// }
 	//如果pud 的page 还没有被放入内存中，那么就直接把pgdval这个地址值设置到各节点的副本pgd表中。
 	if (!page_pud || pgd_none(pgdval) || !pgd_present(pgdval)) {
 		// printk("PTREP: set_pgd  origin pgd=%lx  and pgdval=%lx\n",(long)pgdp, (long)pgd_val(pgdval));

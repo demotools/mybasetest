@@ -263,9 +263,9 @@ asmlinkage void post_ttbr_update_workaround(void)
 			ARM64_WORKAROUND_CAVIUM_27456));
 }
 
-#ifdef CONFIG_PGTABLE_REPLICATION
-// extern bool pgtable_repl_initialized;
-#endif
+// #ifdef CONFIG_PGTABLE_REPLICATION
+// // extern bool pgtable_repl_initialized;
+// #endif
 void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
 {
 	// printk("[mitosis] cpu_do_switch_mm  for mm=%lx.\n",(long)mm);
