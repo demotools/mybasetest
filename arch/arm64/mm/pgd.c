@@ -10,6 +10,8 @@
 #include <linux/gfp.h>
 #include <linux/highmem.h>
 #include <linux/slab.h>
+#include <linux/swap.h>
+#include <linux/swapops.h> //因为要引用 is_pmd_migration_entry 
 
 #include <asm/pgalloc.h>
 #include <asm/page.h>
@@ -753,6 +755,8 @@ void pgtable_repl_set_pte_at(struct mm_struct *mm, unsigned long addr,
 // {
 // 	return (pmd_t) { val };
 // }
+extern int pmd_huge(pmd_t pmd);
+extern int pud_huge(pud_t pud);
 
 void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 {
@@ -786,7 +790,7 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 
 	/* the entry is a large entry i.e. pointing to a frame, or the entry is not valid */
 	if (!page_pte || pmd_none(pmdval) || !pmd_present(pmdval)|| pmd_thp_or_huge(pmdval)
-			|| is_pmd_migration_entry(pmdval) || is_swap_pmd(pmdval) {
+			|| is_pmd_migration_entry(pmdval) || is_swap_pmd(pmdval)) {
 		// printk("PTREP: set_pmd  origin pmd=%lx  and pmdval=%lx\n",(long)pmdp, (long)pmd_val(pmdval));
 		// printk("PTREP: Called pgtable_repl_set_pmd  !page_te \n");
 		// BUG_ON(1);
