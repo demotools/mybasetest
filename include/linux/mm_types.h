@@ -369,6 +369,12 @@ struct vm_area_struct {
 #ifdef CONFIG_NUMA
 	struct mempolicy *vm_policy;	/* NUMA policy for the VMA */
 #endif
+#ifdef CONFIG_NUMA_BALANCING
+#ifdef CONFIG_PGTABLE_MIGRATION
+	int	numa_scan_seq;
+	int	pgtable_scan_seq;
+#endif
+#endif
 	struct vm_userfaultfd_ctx vm_userfaultfd_ctx;
 } __randomize_layout;
 
@@ -530,6 +536,13 @@ struct mm_struct {
 
 		/* Restart point for scanning and setting pte_numa */
 		unsigned long numa_scan_offset;
+
+		#ifdef CONFIG_PGTABLE_MIGRATION
+		/* Restart pointer for scanning and migrating pgtables */
+		unsigned long pgtable_scan_offset;
+		int pgtable_scan_seq;
+		#endif
+		
 
 		/* numa_scan_seq prevents two threads setting pte_numa */
 		int numa_scan_seq;

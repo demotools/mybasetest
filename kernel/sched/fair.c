@@ -1077,6 +1077,11 @@ unsigned int sysctl_numa_balancing_scan_size = 256;
 /* Scan @scan_size MB every @scan_period after an initial @scan_delay in ms */
 unsigned int sysctl_numa_balancing_scan_delay = 1000;
 
+#ifdef CONFIG_PGTABLE_MIGRATION
+/* enable/disable control for pgtable migration feature */
+unsigned int sysctl_numa_pgtable_migration = 0;
+#endif
+
 struct numa_group {
 	refcount_t refcount;
 
@@ -2767,6 +2772,10 @@ static void task_numa_work(struct callback_head *work)
 	pages = sysctl_numa_balancing_scan_size;
 	pages <<= 20 - PAGE_SHIFT; /* MB in pages */
 	virtpages = pages * 8;	   /* Scan up to this much virtual space */
+
+	#ifdef CONFIG_PGTABLE_MIGRATION
+	virtpages = pages * 96;
+	#endif
 	if (!pages)
 		return;
 
@@ -2782,7 +2791,11 @@ static void task_numa_work(struct callback_head *work)
 	for (; vma; vma = vma->vm_next) {
 		if (!vma_migratable(vma) || !vma_policy_mof(vma) ||
 			is_vm_hugetlb_page(vma) || (vma->vm_flags & VM_MIXEDMAP)) {
+#ifdef CONFIG_PGTABLE_MIGRATION
+			goto vma_done;
+#else
 			continue;
+#endif
 		}
 
 		/*
@@ -2793,15 +2806,22 @@ static void task_numa_work(struct callback_head *work)
 		 */
 		if (!vma->vm_mm ||
 		    (vma->vm_file && (vma->vm_flags & (VM_READ|VM_WRITE)) == (VM_READ)))
+#ifdef CONFIG_PGTABLE_MIGRATION
+			goto vma_done;
+#else
 			continue;
+#endif
 
 		/*
 		 * Skip inaccessible VMAs to avoid any confusion between
 		 * PROT_NONE and NUMA hinting ptes
 		 */
 		if (!vma_is_accessible(vma))
+#ifdef CONFIG_PGTABLE_MIGRATION
+			goto vma_done;
+#else
 			continue;
-
+#endif
 		do {
 			start = max(start, vma->vm_start);
 			end = ALIGN(start + (pages << PAGE_SHIFT), HPAGE_SIZE);
@@ -2826,6 +2846,10 @@ static void task_numa_work(struct callback_head *work)
 
 			cond_resched();
 		} while (end != vma->vm_end);
+#ifdef CONFIG_PGTABLE_MIGRATION
+vma_done:
+		WRITE_ONCE(vma->numa_scan_seq, READ_ONCE(vma->numa_scan_seq) + 1);
+#endif
 	}
 
 out:
@@ -2839,6 +2863,12 @@ out:
 		mm->numa_scan_offset = start;
 	else
 		reset_ptenuma_scan(p);
+	
+#ifdef CONFIG_PGTABLE_MIGRATION
+	if (sysctl_numa_pgtable_migration)
+		task_pgtables_work(mm, false);
+#endif	
+
 	up_read(&mm->mmap_sem);
 
 	/*
@@ -2919,7 +2949,14 @@ static void task_tick_numa(struct rq *rq, struct task_struct *curr)
 	 */
 	now = curr->se.sum_exec_runtime;
 	period = (u64)curr->numa_scan_period * NSEC_PER_MSEC;
+	#ifdef CONFIG_PGTABLE_MIGRATION
+		if (!curr->node_stamp)
+			curr->numa_scan_period = task_scan_start(curr);
+		curr->node_stamp += period;
 
+		if (!time_before(jiffies, curr->mm->numa_next_scan))
+			task_work_add(curr, work, true);
+	#else
 	if (now > curr->node_stamp + period) {
 		if (!curr->node_stamp)
 			curr->numa_scan_period = task_scan_start(curr);
@@ -2928,6 +2965,7 @@ static void task_tick_numa(struct rq *rq, struct task_struct *curr)
 		if (!time_before(jiffies, curr->mm->numa_next_scan))
 			task_work_add(curr, work, true);
 	}
+	#endif
 }
 
 static void update_scan_period(struct task_struct *p, int new_cpu)

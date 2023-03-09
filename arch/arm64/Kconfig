@@ -1044,6 +1044,12 @@ config PGTABLE_REPLICATION
 	depends on NUMA
 	---help---
 		Include a PV-Ops backend for page-table replication on NUMA nodes.
+
+config PGTABLE_MIGRATION
+	bool "Enable support for page-table auto migration"
+	depends on NUMA
+	---help---
+		Include a PV-Ops backend for page-table replication on NUMA nodes.
 		
 config PARAVIRT
 	bool "Enable paravirtualization code"

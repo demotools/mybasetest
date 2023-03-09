@@ -392,6 +392,16 @@ static struct ctl_table kern_table[] = {
 		.mode		= 0644,
 		.proc_handler	= sysctl_numa_pgtable_replication_cache_ctl
 	},
+#ifdef CONFIG_PGTABLE_MIGRATION
+	{
+		.procname	= "numa_pgtable_migration",
+		.data		= &sysctl_numa_pgtable_migration,
+		.maxlen		= sizeof(unsigned int),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec,
+		.extra1		= &one,
+	},
+#endif
 #endif
 #endif
 #ifdef CONFIG_NUMA_BALANCING
