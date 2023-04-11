@@ -69,7 +69,7 @@ static inline pgtable_t __pte_alloc_one(struct mm_struct *mm, gfp_t gfp)
 	pte = alloc_page(gfp);
 	#endif
 	#ifdef CONFIG_PGTABLE_REPLICATION
-	pte->replica_node_id = -1;
+	// pte->replica_node_id = -1;
 	pgtable_repl_alloc_pte(mm, virt_to_pfn(page_to_virt(pte)));
 	#endif
 	if (!pte)

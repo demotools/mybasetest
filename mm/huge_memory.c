@@ -1346,7 +1346,13 @@ static vm_fault_t do_huge_pmd_wp_page_fallback(struct vm_fault *vmf,
 	kfree(pages);
 
 	smp_wmb(); /* make pte visible before pmd */
+	// #ifdef CONFIG_PGTABLE_REPLICATION
+	// pmd_populate_no_rep_no_alloc_pte(vma->vm_mm, vmf->pmd, pgtable);
+	// #else
+	// pmd_populate(vma->vm_mm, vmf->pmd, pgtable);
+	// #endif
 	pmd_populate(vma->vm_mm, vmf->pmd, pgtable);
+	// printk("------qhl: wp page end------\n");
 	page_remove_rmap(page, true);
 	spin_unlock(vmf->ptl);
 
@@ -2219,7 +2225,13 @@ static void __split_huge_zero_page_pmd(struct vm_area_struct *vma,
 		pte_unmap(pte);
 	}
 	smp_wmb(); /* make pte visible before pmd */
+	// #ifdef CONFIG_PGTABLE_REPLICATION
+	// pmd_populate_no_rep_no_alloc_pte(mm, pmd, pgtable);
+	// #else
+	// pmd_populate(mm, pmd, pgtable);
+	// #endif
 	pmd_populate(mm, pmd, pgtable);
+	// printk("------qhl: zero page end------\n"); 
 }
 
 static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
@@ -2242,6 +2254,7 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
 	count_vm_event(THP_SPLIT_PMD);
 
 	if (!vma_is_anonymous(vma)) {
+		// printk("------qhl: !vma_is_anonymous ------\n");
 		_pmd = pmdp_huge_clear_flush_notify(vma, haddr, pmd);
 		/*
 		 * We are going to unmap this huge page. So
@@ -2261,6 +2274,7 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
 		add_mm_counter(mm, mm_counter_file(page), -HPAGE_PMD_NR);
 		return;
 	} else if (is_huge_zero_pmd(*pmd)) {
+		// printk("------qhl: is_huge_zero_pmd ------\n");
 		/*
 		 * FIXME: Do we want to invalidate secondary mmu by calling
 		 * mmu_notifier_invalidate_range() see comments below inside
@@ -2293,7 +2307,9 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
 	 * for this pmd), then we flush the SMP TLB and finally we write the
 	 * non-huge version of the pmd entry with pmd_populate.
 	 */
+	
 	old_pmd = pmdp_invalidate(vma, haddr, pmd);
+	// printk("------qhl: pmdp_invalidate ------\n");
 
 	pmd_migration = is_pmd_migration_entry(old_pmd);
 	if (unlikely(pmd_migration)) {
@@ -2306,17 +2322,17 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
 		soft_dirty = pmd_swp_soft_dirty(old_pmd);
 		uffd_wp = pmd_swp_uffd_wp(old_pmd);
 	} else {
-		page = pmd_page(old_pmd);
-		if (pmd_dirty(old_pmd))
+		page = pmd_page(old_pmd); //找到old_pmd 所在的page
+		if (pmd_dirty(old_pmd))  //如果old_pmd 是 dirty， 就把page 也标记为dirty
 			SetPageDirty(page);
-		write = pmd_write(old_pmd);
+		write = pmd_write(old_pmd);   //把old_pmd 的各种状态都读出来， 用于下面512个pte的状态填写
 		young = pmd_young(old_pmd);
 		soft_dirty = pmd_soft_dirty(old_pmd);
 		uffd_wp = pmd_uffd_wp(old_pmd);
 	}
 	VM_BUG_ON_PAGE(!page_count(page), page);
 	page_ref_add(page, HPAGE_PMD_NR - 1);
-
+//    printk("------qhl: debug start------\n");
 	/*
 	 * Withdraw the table only after we mark the pmd entry invalid.
 	 * This's critical for some architectures (Power).
@@ -2344,7 +2360,7 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
 			if (uffd_wp)
 				entry = pte_swp_mkuffd_wp(entry);
 		} else {
-			entry = mk_pte(page + i, READ_ONCE(vma->vm_page_prot));
+			entry = mk_pte(page + i, READ_ONCE(vma->vm_page_prot)); //entry 是512个指向512个物理小页地址的地址值
 			entry = maybe_mkwrite(entry, vma);
 			if (!write)
 				entry = pte_wrprotect(entry);
@@ -2383,6 +2399,12 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
 
 	smp_wmb(); /* make pte visible before pmd */
 	pmd_populate(mm, pmd, pgtable);
+	// #ifdef CONFIG_PGTABLE_REPLICATION
+	// pmd_populate_no_rep_no_alloc_pte(mm, pmd, pgtable);
+	// #else
+	// pmd_populate(mm, pmd, pgtable);
+	// #endif
+	// printk("------qhl: debug end------\n");
 
 	if (freeze) {
 		for (i = 0; i < HPAGE_PMD_NR; i++) {

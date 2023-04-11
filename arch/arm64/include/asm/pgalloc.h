@@ -38,7 +38,7 @@ static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long addr)
 	#endif
 	
 	
-	page->replica_node_id = -1;
+	// page->replica_node_id = -1;
 	pgtable_repl_alloc_pmd(mm, page_to_pfn(page));
 	#endif
 	if (!page)
@@ -94,7 +94,7 @@ static inline pud_t *pud_alloc_one(struct mm_struct *mm, unsigned long addr)
 	pudp = (pud_t *)__get_free_page(GFP_PGTABLE_USER);
 	#endif
 	page = page_of_ptable_entry(pudp);
-	page->replica_node_id = -1;
+	// page->replica_node_id = -1;
 	pgtable_repl_alloc_pud(mm, virt_to_pfn(pudp));
 	#endif
 	return pudp;
@@ -170,6 +170,13 @@ static inline void __pmd_populate_no_rep(pmd_t *pmdp, phys_addr_t ptep,
 	native_set_pmd(pmdp, __pmd(__phys_to_pmd_val(ptep) | prot));
 }
 static inline void pmd_populate_no_rep(struct mm_struct *mm, pmd_t *pmdp, pgtable_t ptep)
+{
+	unsigned long pfn = page_to_pfn(ptep);
+	pgtable_repl_alloc_pte(mm, pfn);
+	__pmd_populate_no_rep(pmdp, page_to_phys(ptep), PMD_TYPE_TABLE);
+	
+}
+static inline void pmd_populate_no_rep_no_alloc_pte(struct mm_struct *mm, pmd_t *pmdp, pgtable_t ptep)
 {
 	__pmd_populate_no_rep(pmdp, page_to_phys(ptep), PMD_TYPE_TABLE);
 	

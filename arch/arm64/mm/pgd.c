@@ -211,13 +211,13 @@ int pgtable_repl_pgd_alloc(struct mm_struct *mm)
 	// pfn_to_nid(virt_to_pfn(mm->pgd))
 	/* get the page of the previously allocated pgd */
 	pgd = page_of_ptable_entry(mm->pgd);
-	pgd->replica_node_id = -1;
+	// pgd->replica_node_id = -1;
 	pgd2 = pgd;
 	for (i = 0; i < nr_node_ids; i++) {
 
 		/* allocte a new page, and place it in the replica list */
 		pgd2->replica = pgtable_cache_alloc(i);
-		pgd2->replica->replica_node_id = i;
+		// pgd2->replica->replica_node_id = i;
 		if (pgd2->replica == NULL) {
 			goto cleanup;
 		}
@@ -311,7 +311,7 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 	if (p == NULL) {
 		return;
 	}
-	p->replica_node_id = -1;
+	// p->replica_node_id = -1;
 	if (!mm->repl_pgd_enabled) {
 		p->replica = NULL;
 		return;
@@ -335,7 +335,7 @@ static inline void __pgtable_repl_alloc_one(struct mm_struct *mm, unsigned long 
 	for (i = 0; i < nr_node_ids; i++) {
 		/* allocte a new page, and place it in the replica list */
 		p2->replica  = pgtable_cache_alloc(i);
-		p2->replica->replica_node_id = i;
+		// p2->replica->replica_node_id = i;
 		if (p2->replica == NULL) {
 			goto cleanup;
 		}
@@ -423,7 +423,7 @@ static inline void __pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long 
 	if (p == NULL) {
 		return;
 	}
-	p->replica_node_id = -1;
+	// p->replica_node_id = -1;
 	if (!mm->repl_pgd_enabled) {
 		p->replica = NULL;
 		return;
@@ -447,7 +447,7 @@ static inline void __pgtable_repl_alloc_pmd(struct mm_struct *mm, unsigned long 
 	for (i = 0; i < nr_node_ids; i++) {
 		/* allocte a new page, and place it in the replica list */
 		p2->replica  = pgtable_cache_alloc(i);
-		p2->replica->replica_node_id = i;
+		// p2->replica->replica_node_id = i;
 		if (p2->replica == NULL) {
 			goto cleanup;
 		}
@@ -520,7 +520,7 @@ static inline void __pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long 
 	if (p == NULL) {
 		return;
 	}
-	p->replica_node_id = -1;
+	// p->replica_node_id = -1;
 	if (!mm->repl_pgd_enabled) {
 		p->replica = NULL;
 		return;
@@ -544,7 +544,7 @@ static inline void __pgtable_repl_alloc_pte(struct mm_struct *mm, unsigned long 
 	for (i = 0; i < nr_node_ids; i++) {
 		/* allocte a new page, and place it in the replica list */
 		p2->replica  = pgtable_cache_alloc(i);
-		p2->replica->replica_node_id = i;
+		// p2->replica->replica_node_id = i;
 		if (p2->replica == NULL) {
 			goto cleanup;
 		}
@@ -799,6 +799,7 @@ void pgtable_repl_set_pmd(pmd_t *pmdp, pmd_t pmdval)
 			check_page_node(page_pmd, i);
 			pmdp = (pmd_t *)((long)page_to_virt(page_pmd) + offset);
 			native_set_pmd(pmdp, pmdval);
+			// printk("PTREP: set_pmd  replica pmd=%lx \n",(long)pmdp);
 		}
 		return;
 	}
@@ -1263,10 +1264,10 @@ int pgtbl_repl_prepare_replication(struct mm_struct *mm, nodemask_t nodes)
 					continue;
 				}
 				pmd_num++;
-				// if (pmd_huge(pmd[pmd_idx])) {
-				// 	set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
-				// 	continue;
-				// }
+				if (pmd_thp_or_huge(pmd[pmd_idx])) {
+					set_pmd(pmd + pmd_idx, pmd[pmd_idx]);
+					continue;
+				}
 				printk("PTREP: pmd_idx = %ld，and pmd=%lx  and pmd[%ld]=%lx\n",pmd_idx,(long)(pmd + pmd_idx),pmd_idx, (long)pmd_val(pmd[pmd_idx]));
 				/* get the pte page */
 				//  pte = (pte_t *)pmd_page_vaddr(pmd[pmd_idx]);
