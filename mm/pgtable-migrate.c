@@ -68,7 +68,7 @@ out:
 	return NULL;
 }
 
-static inline spinlock_t *p4d_lockptr(struct mm_struct *mm, p4d_t *p4d)
+static inline spinlock_t *pgd_lockptr(struct mm_struct *mm, pgd_t *pgd)
 {
 	return &mm->page_table_lock;
 }
@@ -214,6 +214,7 @@ static bool migrate_pte_pgtable(struct mm_struct *mm, pmd_t *pmd,
 	struct page *src, *dst;
 	struct vm_area_struct *vma;
 	spinlock_t *ptl;
+	struct mmu_notifier_range range;
 
 	vma = find_vma(mm, addr);
 	if (!vma)
@@ -229,10 +230,18 @@ static bool migrate_pte_pgtable(struct mm_struct *mm, pmd_t *pmd,
 	if (unlikely(!dst))
 		return false;
 
-	new_pmd = __pmd(((pteval_t)page_to_pfn(dst) << PAGE_SHIFT) | _PAGE_TABLE);
+	new_pmd = __pmd(((pteval_t)page_to_pfn(dst) << PAGE_SHIFT) | PMD_TYPE_TABLE);
 	smp_wmb();
 	up_read(&mm->mmap_sem);
-	mmu_notifier_invalidate_range_start(mm, addr, addr + HPAGE_PMD_SIZE);
+	// mmu_notifier_invalidate_range_start(mm, addr, addr + HPAGE_PMD_SIZE);
+
+	mmu_notifier_range_init(&range,
+							MMU_NOTIFY_CLEAR, 0,
+							NULL,
+							mm,
+							addr, addr + HPAGE_PMD_SIZE);
+	mmu_notifier_invalidate_range_start(&range);
+
 	/* prevent all accesses to page tables */
 	down_write(&mm->mmap_sem);
 	/* lock the page-table */
@@ -248,7 +257,8 @@ static bool migrate_pte_pgtable(struct mm_struct *mm, pmd_t *pmd,
 	copy_pgtable(dst, src);
 	/* set_pmd(pmd, new_pmd); */
 	pmd_populate(mm, pmd, dst);
-	mmu_notifier_invalidate_range_end(mm, addr, addr + HPAGE_PMD_SIZE);
+	// mmu_notifier_invalidate_range_end(mm, addr, addr + HPAGE_PMD_SIZE);
+	mmu_notifier_invalidate_range_end(&range);
 	__free_page(src);
 	*new_nid = nid;
 	count_vm_numa_events(NUMA_PGTABLE_PTE_MIGRATED, 1);
@@ -278,6 +288,7 @@ static bool migrate_pmd_pgtable(struct mm_struct *mm, pud_t *pud,
 	struct vm_area_struct *vma;
 	unsigned long end;
 	spinlock_t *ptl;
+	struct mmu_notifier_range range;
 
 	vma = find_vma(mm, addr);
 	if (!vma)
@@ -301,7 +312,13 @@ static bool migrate_pmd_pgtable(struct mm_struct *mm, pud_t *pud,
 	smp_wmb();
 	up_read(&mm->mmap_sem);
 	down_write(&mm->mmap_sem);
-	mmu_notifier_invalidate_range_start(mm, addr, end);
+	// mmu_notifier_invalidate_range_start(mm, addr, end);
+	mmu_notifier_range_init(&range,
+							MMU_NOTIFY_CLEAR, 0,
+							NULL,
+							mm,
+							addr, end);
+	mmu_notifier_invalidate_range_start(&range);
 	ptl = pud_lockptr(mm, pud);
 	spin_lock(ptl);
 	/* verify if the tables has been updated somewhere */
@@ -317,7 +334,8 @@ static bool migrate_pmd_pgtable(struct mm_struct *mm, pud_t *pud,
 	pud_populate(mm, pud, new_pmd);
 	deposit_pmd_pgtables(mm, pud, addr, end, pgtables);
 	flush_tlb_range(vma, addr, end);
-	mmu_notifier_invalidate_range_end(mm, addr, end);
+	// mmu_notifier_invalidate_range_end(mm, addr, end);
+	mmu_notifier_invalidate_range_end(&range);
 	__free_page(src);
 	count_vm_numa_events(NUMA_PGTABLE_PMD_MIGRATED, 1);
 out:
@@ -332,19 +350,20 @@ out:
  * TODO: Verify the sequence of operations here. It may be safer to
  * invalidate the P4D entry first, before migrating the PMD table.
  */
-static bool migrate_pud_pgtable(struct mm_struct *mm, p4d_t *p4d,
+static bool migrate_pud_pgtable(struct mm_struct *mm, pgd_t *pgd,
 			unsigned long addr, int nid)
 {
         spinlock_t *ptl;
         int source_nid;
         struct page *src, *dst;
         struct vm_area_struct *vma;
+		struct mmu_notifier_range range;
 
         vma = find_vma(mm, addr);
         if (!vma)
                 return false;
 
-        src = pfn_to_page(p4d_pfn(*p4d));
+        src = pgd_page(*pgd);
         source_nid = page_to_nid(src);
         /* check if we need to migrate at all */
 	if (likely(!misplaced_pgtable(src, nid)))
@@ -357,15 +376,22 @@ static bool migrate_pud_pgtable(struct mm_struct *mm, p4d_t *p4d,
         smp_wmb();
 	up_read(&mm->mmap_sem);
 	down_write(&mm->mmap_sem);
-        ptl = p4d_lockptr(mm, p4d);
-        mmu_notifier_invalidate_range_start(mm, addr, addr + PUD_SIZE);
+        ptl = pgd_lockptr(mm, pgd);
+        // mmu_notifier_invalidate_range_start(mm, addr, addr + PUD_SIZE);
+		mmu_notifier_range_init(&range,
+							MMU_NOTIFY_CLEAR, 0,
+							NULL,
+							mm,
+							addr, addr + PUD_SIZE);
+	mmu_notifier_invalidate_range_start(&range);
         spin_lock(ptl);
 	copy_pgtable(dst, src);
-        p4d_populate(mm, p4d, (pud_t *)page_address(dst));
+        pgd_populate(mm, pgd, (pud_t *)page_address(dst));
 	/* even if va->pa mappings dont change, we need this to flush page-walk caches */
         flush_tlb_range(vma, addr, addr + PUD_SIZE);
         spin_unlock(ptl);
-        mmu_notifier_invalidate_range_end(mm, addr, addr + PUD_SIZE);
+        // mmu_notifier_invalidate_range_end(mm, addr, addr + PUD_SIZE);
+		mmu_notifier_invalidate_range_end(&range);
         __free_page(src);
 	count_vm_numa_events(NUMA_PGTABLE_PUD_MIGRATED, 1);
 	up_write(&mm->mmap_sem);
@@ -420,16 +446,18 @@ static int scan_pmd_range(struct mm_struct *mm, pud_t *pud, unsigned long addr,
  * Scan and migrate the next level (PMD) first.
  * This helps in determining the optimal placement of PUD pgtable.
  */
-static int scan_pud_range(struct mm_struct *mm, p4d_t *p4d, unsigned long addr,
+// static int scan_pud_range(struct mm_struct *mm, p4d_t *p4d, unsigned long addr,
+				// unsigned long end)
+static int scan_pud_range(struct mm_struct *mm, pgd_t *pgd, unsigned long addr,
 				unsigned long end)
 {
 	pud_t *pud;
 	int old_nid, new_nid, count[MAX_NUMA_NODES] = {0};
 	unsigned long next, start = addr;
 
-	old_nid = pfn_to_nid(p4d_pfn(*p4d));
+	// old_nid = pfn_to_nid(p4d_pfn(*p4d));
 	/* process the children first */
-	pud = pud_offset(p4d, addr);
+	pud = pud_offset(pgd, addr);
 	do {
 		next = pud_addr_end(addr, end);
 		if (pud_none(*pud))
@@ -448,7 +476,7 @@ static int scan_pud_range(struct mm_struct *mm, p4d_t *p4d, unsigned long addr,
 	 */
 	count_vm_numa_events(NUMA_PGTABLE_PUD_SCANNED, 1);
 	new_nid = get_optimal_pgtable_node(count, PGTABLE_PUD_LEVEL);
-	if (migrate_pud_pgtable(mm, p4d, start, new_nid))
+	if (migrate_pud_pgtable(mm, pgd, start, new_nid))
 		return new_nid;
 
 	return old_nid;
@@ -489,7 +517,8 @@ static void scan_pgd_range(struct mm_struct *mm, unsigned long addr, unsigned lo
 		if (pgd_none_or_clear_bad(pgd))
 			continue;
 
-		scan_p4d_range(pgd, addr, next, mm);
+		// scan_p4d_range(pgd, addr, next, mm);
+		scan_pud_range(mm, pgd, addr, next);
 	} while (pgd++, addr = next, addr != end);
 }
 
